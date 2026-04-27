@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   builtins.h                                         :+:      :+:    :+:   */
+/*   exit.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vasukmua <vasukmua@student.42bangkok.com>  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -10,17 +10,34 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef BUILTINS_H
-# define BUILTINS_H
+#include "shell.h"
+#include "ft_fprintf.h"
+#include "libft.h"
+#include <stdlib.h>
 
-# include "shell.h"
+/**
+ * builtin_exit - Exit the shell with optional code
+ * @shell: Shell context
+ * @args: args[1] optional numeric exit code
+ */
+void	builtin_exit(t_shell *shell, char **args)
+{
+	int		code;
+	void	*a[1];
 
-int		builtin_echo(char **args);
-int		builtin_pwd(void);
-int		builtin_cd(char **args);
-int		builtin_env(t_shell *shell);
-int		builtin_export(t_shell *shell, char **args);
-int		builtin_unset(t_shell *shell, char **args);
-void	builtin_exit(t_shell *shell, char **args);
-
-#endif
+	ft_fprintf(1, "exit\n", NULL);
+	code = shell->last_exit;
+	if (args[1])
+	{
+		if (!ft_isdigit(args[1][0]) && args[1][0] != '-')
+		{
+			a[0] = args[1];
+			ft_fprintf(2, "minishell: exit: %s: numeric argument required\n", a);
+			code = 2;
+		}
+		else
+			code = ft_atoi(args[1]) & 0xFF;
+	}
+	arena_destroy(shell->arena);
+	exit(code);
+}

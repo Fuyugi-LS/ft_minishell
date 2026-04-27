@@ -14,8 +14,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <readline/readline.h>
-#include "dep/ft_fprintf/ft_fprintf.h"
-#include "signal_minishell.h"
+#include "ft_fprintf.h"
 
 /**
  * handle_sigint - Handle Ctrl+C (SIGINT)

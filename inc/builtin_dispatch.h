@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   builtins.h                                         :+:      :+:    :+:   */
+/*   builtin_dispatch.h                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vasukmua <vasukmua@student.42bangkok.com>  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -10,17 +10,12 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef BUILTINS_H
-# define BUILTINS_H
+#ifndef BUILTIN_DISPATCH_H
+# define BUILTIN_DISPATCH_H
 
 # include "shell.h"
 
-int		builtin_echo(char **args);
-int		builtin_pwd(void);
-int		builtin_cd(char **args);
-int		builtin_env(t_shell *shell);
-int		builtin_export(t_shell *shell, char **args);
-int		builtin_unset(t_shell *shell, char **args);
-void	builtin_exit(t_shell *shell, char **args);
+int		is_builtin(char *name);
+int		run_builtin(t_shell *shell, char **args);
 
 #endif

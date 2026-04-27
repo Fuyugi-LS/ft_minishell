@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   builtins.h                                         :+:      :+:    :+:   */
+/*   shell.h                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vasukmua <vasukmua@student.42bangkok.com>  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -10,17 +10,22 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef BUILTINS_H
-# define BUILTINS_H
+#ifndef SHELL_H
+# define SHELL_H
 
-# include "shell.h"
+# include "arena.h"
 
-int		builtin_echo(char **args);
-int		builtin_pwd(void);
-int		builtin_cd(char **args);
-int		builtin_env(t_shell *shell);
-int		builtin_export(t_shell *shell, char **args);
-int		builtin_unset(t_shell *shell, char **args);
-void	builtin_exit(t_shell *shell, char **args);
+/**
+ * struct s_shell - The master shell context passed through the whole program
+ * This is the ONE struct that reduces args everywhere.
+ */
+typedef struct s_shell
+{
+	char		**envp;
+	t_arena		*arena;
+	int			last_exit;
+}	t_shell;
+
+extern int	g_signal;
 
 #endif

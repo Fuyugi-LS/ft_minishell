@@ -10,30 +10,24 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <readline/readline.h>
 #include <readline/history.h>
-#include "signals.h"
-#include "dep/ft_fprintf.h"
+#include "shell.h"
+#include "signal_minishell.h"
+#include "ft_fprintf.h"
+#include "parser.h"
+#include "exe.h"
 
-/**
- * main - The entry point for Minishell
- * @argc: Argument count
- * @argv: Argument vector
- * @envp: Environment variables
- *
- * Return: 0 on success, or an error code
- */
-int	main(int argc, char **argv, char **envp)
+int	g_signal = 0;
+
+static void	run_loop(t_shell *shell)
 {
 	char	*input;
+	t_token	*tokens;
+	t_cmd	*cmds;
+	int		count;
 
-	(void)argc;
-	(void)argv;
-	(void)envp;
-	init_signals();
 	while (1)
 	{
 		input = readline("minishell$ ");
@@ -44,7 +38,36 @@ int	main(int argc, char **argv, char **envp)
 		}
 		if (*input)
 			add_history(input);
+		tokens = tokenize_input(&shell->arena, input);
+		cmds = parse_tokens(shell, tokens, &count);
+		if (cmds)
+			execute_commands(shell, cmds, count);
+		arena_reset(shell->arena);
 		free(input);
 	}
-	return (0);
+}
+
+/**
+ * main - Minishell entry point
+ * @argc: Argument count
+ * @argv: Argument vector
+ * @envp: Environment variables
+ *
+ * Return: last exit status
+ */
+int	main(int argc, char **argv, char **envp)
+{
+	t_shell	shell;
+
+	(void)argc;
+	(void)argv;
+	shell.envp = envp;
+	shell.last_exit = 0;
+	shell.arena = arena_init(ARENA_BLOCK_SIZE);
+	if (!shell.arena)
+		return (1);
+	init_signals();
+	run_loop(&shell);
+	arena_destroy(shell.arena);
+	return (shell.last_exit);
 }

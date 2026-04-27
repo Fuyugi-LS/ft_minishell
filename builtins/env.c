@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   builtins.h                                         :+:      :+:    :+:   */
+/*   env.c                                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vasukmua <vasukmua@student.42bangkok.com>  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -10,17 +10,26 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef BUILTINS_H
-# define BUILTINS_H
+#include "shell.h"
+#include "ft_fprintf.h"
+#include <unistd.h>
 
-# include "shell.h"
+/**
+ * builtin_env - Print all environment variables
+ * @shell: Shell context
+ *
+ * Return: 0
+ */
+int	builtin_env(t_shell *shell)
+{
+	int		i;
+	void	*a[1];
 
-int		builtin_echo(char **args);
-int		builtin_pwd(void);
-int		builtin_cd(char **args);
-int		builtin_env(t_shell *shell);
-int		builtin_export(t_shell *shell, char **args);
-int		builtin_unset(t_shell *shell, char **args);
-void	builtin_exit(t_shell *shell, char **args);
-
-#endif
+	i = -1;
+	while (shell->envp[++i])
+	{
+		a[0] = shell->envp[i];
+		ft_fprintf(1, "%s\n", a);
+	}
+	return (0);
+}

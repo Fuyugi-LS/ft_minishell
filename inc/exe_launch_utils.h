@@ -1,18 +1,20 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   signal_minishell.h                                 :+:      :+:    :+:   */
+/*   exe_launch_utils.h                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vasukmua <vasukmua@student.42bangkok.com>  +#+  +:+       +#+        */
+/*   By: nsongsit <nsongsit@student.42bangkok.com>  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/20 18:00:00 by vasukmua          #+#    #+#             */
-/*   Updated: 2026/04/20 18:00:00 by vasukmua         ###   ########.fr       */
+/*   Created: 2026/04/20 18:00:00 by nsongsit          #+#    #+#             */
+/*   Updated: 2026/04/20 18:00:00 by nsongsit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef SIGNAL_MINISHELL_H
-# define SIGNAL_MINISHELL_H
+#ifndef EXE_LAUNCH_UTILS_H
+# define EXE_LAUNCH_UTILS_H
 
-void	init_signals(void);
+# include "cmd_types.h"
+
+void	exe_launch(t_cmd *cmd, char **envp);
 
 #endif

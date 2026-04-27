@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   builtins.h                                         :+:      :+:    :+:   */
+/*   cd.c                                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vasukmua <vasukmua@student.42bangkok.com>  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -10,17 +10,29 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef BUILTINS_H
-# define BUILTINS_H
+#include "ft_fprintf.h"
+#include <unistd.h>
 
-# include "shell.h"
+/**
+ * builtin_cd - Change current directory
+ * @args: args[1] is the target path
+ *
+ * Return: 0 on success, 1 on failure
+ */
+int	builtin_cd(char **args)
+{
+	void	*a[1];
 
-int		builtin_echo(char **args);
-int		builtin_pwd(void);
-int		builtin_cd(char **args);
-int		builtin_env(t_shell *shell);
-int		builtin_export(t_shell *shell, char **args);
-int		builtin_unset(t_shell *shell, char **args);
-void	builtin_exit(t_shell *shell, char **args);
-
-#endif
+	if (!args[1])
+	{
+		ft_fprintf(2, "minishell: cd: missing argument\n", NULL);
+		return (1);
+	}
+	if (chdir(args[1]) == -1)
+	{
+		a[0] = args[1];
+		ft_fprintf(2, "minishell: cd: %s: No such file or directory\n", a);
+		return (1);
+	}
+	return (0);
+}

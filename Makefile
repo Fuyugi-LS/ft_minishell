@@ -3,19 +3,32 @@ NAME		= minishell
 CC			= cc
 CFLAGS		= -Wall -Wextra -Werror -g3
 
-SRC			= minishell.c signals.c \
-			  b/echo.c b/pwd.c b/exit.c b/cd.c b/env.c b/export.c b/unset.c
-OBJ			= $(SRC:.c=.o)
+SRCS		= minishell.c signals.c \
+			  builtins/echo.c builtins/pwd.c builtins/exit.c builtins/cd.c \
+			  builtins/env.c builtins/export.c builtins/unset.c \
+			  builtins/dispatch.c \
+			  mem/arena.c \
+			  parser/cmd_table.c \
+			  parser/lexer.c \
+			  parser/parser.c \
+			  parser/expander.c \
+			  exe/executor.c \
+			  exe/exe_utils.c \
+			  exe/exe_ctx.c
+OBJ			= $(SRCS:.c=.o)
 
 FPRINTF_DIR	= dep/ft_fprintf
 FPRINTF_LIB	= $(FPRINTF_DIR)/libftfprintf.a
 
-INC			= -Iinc -Idep/ft_fprintf
-LIBS		= -L$(FPRINTF_DIR) -lftfprintf -lreadline
+LIBFT_DIR	= dep/libft
+LIBFT_LIB	= $(LIBFT_DIR)/libft.a
+
+INC			= -Iinc -Idep/ft_fprintf -Idep/libft
+LIBS		= -L$(FPRINTF_DIR) -lftfprintf -L$(LIBFT_DIR) -lft -lreadline
 
 all: $(NAME)
 
-$(NAME): $(FPRINTF_LIB) $(OBJ)
+$(NAME): $(FPRINTF_LIB) $(LIBFT_LIB) $(OBJ)
 	$(CC) $(CFLAGS) $(OBJ) $(LIBS) -o $(NAME)
 
 %.o: %.c
@@ -24,13 +37,18 @@ $(NAME): $(FPRINTF_LIB) $(OBJ)
 $(FPRINTF_LIB):
 	$(MAKE) -C $(FPRINTF_DIR)
 
+$(LIBFT_LIB):
+	$(MAKE) -C $(LIBFT_DIR)
+
 clean:
 	rm -f $(OBJ)
 	$(MAKE) -C $(FPRINTF_DIR) clean
+	$(MAKE) -C $(LIBFT_DIR) clean
 
 fclean: clean
 	rm -f $(NAME)
 	$(MAKE) -C $(FPRINTF_DIR) fclean
+	$(MAKE) -C $(LIBFT_DIR) fclean
 
 re: fclean all
 
