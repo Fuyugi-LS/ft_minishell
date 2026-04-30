@@ -59,18 +59,22 @@ void	*arena_alloc(t_arena **arena, size_t size)
 	if (!arena || !*arena)
 		return (NULL);
 	curr = *arena;
-	while (curr->next)
-		curr = curr->next;
-	if (curr->offset + size > curr->size)
+	while (curr)
 	{
-		curr->next = arena_init(4096 > size ? 4096 : size);
-		if (!curr->next)
+		if (curr->offset + size <= curr->size)
 		{
-			ft_fprintf(2, "Error: arena alloc failed\n", NULL);
-			return (NULL);
+			ptr = (char *)curr->block + curr->offset;
+			curr->offset += size;
+			return (ptr);
 		}
+		if (!curr->next)
+			break ;
 		curr = curr->next;
 	}
+	curr->next = arena_init(4096 > size ? 4096 : size);
+	if (!curr->next)
+		return (NULL);
+	curr = curr->next;
 	ptr = (char *)curr->block + curr->offset;
 	curr->offset += size;
 	return (ptr);

@@ -53,6 +53,10 @@ int	run_builtin(t_shell *shell, char **args)
 		return (builtin_export(shell, args));
 	if (ft_strncmp(args[0], "unset", 6) == 0)
 		return (builtin_unset(shell, args));
-	builtin_exit(shell, args);
+	if (ft_strncmp(args[0], "exit", 5) == 0)
+	{
+		builtin_exit(shell, args);
+		return (shell->last_exit);
+	}
 	return (0);
 }

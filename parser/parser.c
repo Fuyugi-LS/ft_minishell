@@ -11,120 +11,163 @@
 /* ************************************************************************** */
 
 #include "cmd_types.h"
+#include "parser.h"
 #include "parser_utils.h"
 #include "expander.h"
 #include "arena.h"
+#include "libft.h"
 #include "ft_fprintf.h"
 
-static int	count_cmds(t_token *t)
+char	*finalize_word(char *s)
 {
-	int	n;
+	int	i;
 
-	n = 1;
-	while (t)
+	if (!s)
+		return (NULL);
+	i = -1;
+	while (s[++i])
 	{
-		if (t->type == TOK_PIPE)
-			n++;
-		t = t->next;
+		if (s[i] == 1)
+			s[i] = '*';
 	}
-	return (n);
+	return (s);
 }
 
-static int	count_args(t_token *t)
+int	has_wildcard(char *s)
 {
-	int	n;
-
-	n = 0;
-	while (t && t->type != TOK_PIPE)
+	if (!s)
+		return (0);
+	while (*s)
 	{
-		if (t->type == TOK_WORD)
-			n++;
-		else
-		{
-			if (t->next)
-				t = t->next;
-		}
-		t = t->next;
+		if (*s == 1)
+			return (1);
+		s++;
 	}
-	return (n);
+	return (0);
 }
 
-static t_token	*handle_redir(t_shell *shell, t_cmd *cmd, t_token *t)
+
+static void	add_redir_node(t_shell *shell, t_redir **list, t_redir_type type, char *file)
+{
+	t_redir	*new;
+	t_redir	*last;
+
+	new = arena_alloc(&shell->arena, sizeof(t_redir));
+	if (!new)
+		return ;
+	new->type = type;
+	new->file = file;
+	new->next = NULL;
+	if (!*list)
+		*list = new;
+	else
+	{
+		last = *list;
+		while (last->next)
+			last = last->next;
+		last->next = new;
+	}
+}
+
+int	parse_redirection(t_shell *shell, t_redir **redirs, t_token **t)
 {
 	char	*val;
+	void	*a[1];
+	t_token	*cur;
 
-	if (!t->next)
-		return (NULL);
-	val = expand_word(shell, t->next->value);
-	if (t->type == TOK_REDIR_IN)
-		cmd->infile = val;
-	else if (t->type == TOK_REDIR_OUT)
-		cmd->outfile = val;
-	else if (t->type == TOK_REDIR_APPEND)
+	cur = *t;
+	if (!cur->next || cur->next->type != TOK_WORD)
 	{
-		cmd->outfile = val;
-		cmd->append_mode = 1;
+		a[0] = (cur->next ? cur->next->value : "newline");
+		ft_fprintf(2, "minishell: syntax error near unexpected token `%s'\n", a);
+		shell->last_exit = 2;
+		shell->error_printed = 1;
+		return (1);
 	}
-	else if (t->type == TOK_REDIR_HEREDOC)
-		cmd->heredoc_delim = val;
-	if (t->next)
-		return (t->next->next);
-	return (t->next);
+	val = cur->next->value;
+	val = finalize_word(val);
+	if (cur->type == TOK_REDIR_IN)
+		add_redir_node(shell, redirs, REDIR_IN, val);
+	else if (cur->type == TOK_REDIR_OUT)
+		add_redir_node(shell, redirs, REDIR_OUT, val);
+	else if (cur->type == TOK_REDIR_APPEND)
+		add_redir_node(shell, redirs, REDIR_APPEND, val);
+	else if (cur->type == TOK_REDIR_HEREDOC)
+		add_redir_node(shell, redirs, REDIR_HEREDOC, val);
+	*t = cur->next->next;
+	return (0);
 }
 
-static t_token	*fill_cmd(t_shell *shell, t_cmd *cmd, t_token *t)
+static int	fill_cmd(t_shell *shell, t_cmd *cmd, t_token **tok)
 {
-	int	wc;
-	int	wi;
+	int		wi;
+	t_token	*t;
 
-	wc = count_args(t);
-	cmd->args = arena_alloc(&shell->arena, sizeof(char *) * (wc + 1));
-	if (!cmd->args)
-		return (NULL);
+	t = *tok;
 	wi = 0;
-	while (t && t->type != TOK_PIPE)
+	cmd->args = arena_alloc(&shell->arena, sizeof(char *) * 1024);
+	if (!cmd->args)
+		return (1);
+	ft_memset(cmd->args, 0, sizeof(char *) * 1024);
+	while (t && t->type != TOK_PIPE && t->type != TOK_AND && t->type != TOK_OR 
+		&& t->type != TOK_LPAREN && t->type != TOK_RPAREN)
 	{
 		if (t->type == TOK_WORD)
-			cmd->args[wi++] = expand_word(shell, t->value);
-		else
+			cmd->args[wi++] = t->value;
+		else if (t->type == TOK_REDIR_IN || t->type == TOK_REDIR_OUT 
+			|| t->type == TOK_REDIR_APPEND || t->type == TOK_REDIR_HEREDOC)
 		{
-			t = handle_redir(shell, cmd, t);
+			if (parse_redirection(shell, &cmd->redirs, &t))
+				return (1);
 			continue ;
+		}
+		else if (t->type == TOK_ERROR)
+		{
+			shell->last_exit = 2;
+			return (1);
 		}
 		t = t->next;
 	}
 	cmd->args[wi] = NULL;
-	if (t && t->type == TOK_PIPE)
-		t = t->next;
-	return (t);
+	*tok = t;
+	return (0);
 }
 
 /**
- * parse_tokens - Build the flat command table from token list
+ * parse_tokens - Build a single t_cmd from token list
  * @shell: Shell context
  * @tokens: Token list from lexer
- * @cmd_count: Output: number of commands
+ * @cmd_count: Output: 1 on success
  *
- * Return: Flat t_cmd array or NULL
+ * Return: Flat t_cmd array (size 1) or NULL
  */
-t_cmd	*parse_tokens(t_shell *shell, t_token *tokens, int *cmd_count)
+t_cmd	*parse_tokens(t_shell *shell, t_token **tokens, int *cmd_count)
 {
 	t_cmd	*table;
 	t_token	*cur;
-	int		i;
 
-	if (!tokens)
+	if (!*tokens || !tokens)
 	{
 		*cmd_count = 0;
 		return (NULL);
 	}
-	*cmd_count = count_cmds(tokens);
-	table = cmd_table_new(&shell->arena, *cmd_count);
+	if ((*tokens)->type == TOK_PIPE || (*tokens)->type == TOK_AND || (*tokens)->type == TOK_OR 
+		|| (*tokens)->type == TOK_AMPERSAND || (*tokens)->type == TOK_ERROR)
+	{
+		shell->last_exit = 2;
+		return (NULL);
+	}
+	*cmd_count = 1;
+	table = arena_alloc(&shell->arena, sizeof(t_cmd));
 	if (!table)
 		return (NULL);
-	cur = tokens;
-	i = -1;
-	while (++i < *cmd_count)
-		cur = fill_cmd(shell, &table[i], cur);
+	ft_memset(table, 0, sizeof(t_cmd));
+	cur = *tokens;
+	if (fill_cmd(shell, table, &cur))
+	{
+		*tokens = cur;
+		return (NULL);
+	}
+	*tokens = cur;
 	return (table);
 }

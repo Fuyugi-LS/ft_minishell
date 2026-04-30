@@ -15,6 +15,6 @@
 
 # include "shell.h"
 
-char	*expand_word(t_shell *shell, char *s);
+char	*expand_word(t_shell *shell, char *s, int *seen_quotes);
 
 #endif

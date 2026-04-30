@@ -21,7 +21,13 @@ typedef enum e_token_type
 	TOK_REDIR_OUT,
 	TOK_REDIR_APPEND,
 	TOK_REDIR_HEREDOC,
-	TOK_EOF
+	TOK_AND,
+	TOK_OR,
+	TOK_LPAREN,
+	TOK_RPAREN,
+	TOK_AMPERSAND,
+	TOK_EOF,
+	TOK_ERROR
 }	t_token_type;
 
 typedef struct s_token
@@ -31,13 +37,44 @@ typedef struct s_token
 	struct s_token	*next;
 }	t_token;
 
+typedef enum e_redir_type
+{
+	REDIR_IN,
+	REDIR_OUT,
+	REDIR_APPEND,
+	REDIR_HEREDOC
+}	t_redir_type;
+
+typedef struct s_redir
+{
+	t_redir_type	type;
+	char			*file;
+	struct s_redir	*next;
+}	t_redir;
+
 typedef struct s_cmd
 {
 	char	**args;
-	char	*infile;
-	char	*outfile;
-	int		append_mode;
-	char	*heredoc_delim;
+	t_redir	*redirs;
 }	t_cmd;
+
+typedef enum e_node_type
+{
+	NODE_COMMAND,
+	NODE_PIPE,
+	NODE_AND,
+	NODE_OR,
+	NODE_SUBSHELL
+}	t_node_type;
+
+typedef struct s_node
+{
+	t_node_type		type;
+	struct s_node	*left;
+	struct s_node	*right;
+	t_cmd			*cmds;
+	t_redir			*redirs;
+	int				count;
+}	t_node;
 
 #endif

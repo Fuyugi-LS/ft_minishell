@@ -33,23 +33,27 @@ int	builtin_unset(t_shell *shell, char **args)
 {
 	int	i;
 	int	j;
+	int	k;
 
-	if (!args[1])
-		return (0);
-	i = 0;
-	while (shell->envp[i])
+	k = 1;
+	while (args[k])
 	{
-		if (key_matches(shell->envp[i], args[1]))
+		i = 0;
+		while (shell->envp[i])
 		{
-			j = i;
-			while (shell->envp[j])
+			if (key_matches(shell->envp[i], args[k]))
 			{
-				shell->envp[j] = shell->envp[j + 1];
-				j++;
+				j = i;
+				while (shell->envp[j])
+				{
+					shell->envp[j] = shell->envp[j + 1];
+					j++;
+				}
 			}
+			else
+				i++;
 		}
-		else
-			i++;
+		k++;
 	}
 	return (0);
 }

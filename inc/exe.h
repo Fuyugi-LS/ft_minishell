@@ -17,5 +17,6 @@
 # include "shell.h"
 
 void	execute_commands(t_shell *shell, t_cmd *cmds, int count);
+void	execute_ast(t_shell *shell, t_node *node);
 
 #endif

@@ -28,6 +28,11 @@ int	builtin_cd(char **args)
 		ft_fprintf(2, "minishell: cd: missing argument\n", NULL);
 		return (1);
 	}
+	if (args[1] && args[2])
+	{
+		ft_fprintf(2, "minishell: cd: too many arguments\n", NULL);
+		return (1);
+	}
 	if (chdir(args[1]) == -1)
 	{
 		a[0] = args[1];

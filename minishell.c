@@ -10,7 +10,6 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <stdlib.h>
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "shell.h"
@@ -18,32 +17,50 @@
 #include "ft_fprintf.h"
 #include "parser.h"
 #include "exe.h"
+#include "libft.h"
 
 int	g_signal = 0;
 
-static void	run_loop(t_shell *shell)
+void	run_loop(t_shell *shell)
 {
-	char	*input;
-	t_token	*tokens;
-	t_cmd	*cmds;
-	int		count;
+	char			*input;
+	t_token			*tokens;
+	t_token			*cur_tok;
+	t_node			*ast;
 
 	while (1)
 	{
+		rl_on_new_line();
+		rl_replace_line("", 0);
 		input = readline("minishell$ ");
 		if (!input)
 		{
-			ft_fprintf(1, "exit\n", NULL);
+			if (isatty(0))
+				write(1, "exit\n", 5);
 			break ;
 		}
 		if (*input)
 			add_history(input);
+		shell->error_printed = 0;
 		tokens = tokenize_input(&shell->arena, input);
-		cmds = parse_tokens(shell, tokens, &count);
-		if (cmds)
-			execute_commands(shell, cmds, count);
-		arena_reset(shell->arena);
+		cur_tok = tokens;
+		ast = parse_ast(shell, &cur_tok);
+		if (!shell->error_printed && (cur_tok || (!ast && shell->last_exit == 2)))
+		{
+			char *val;
+			if (cur_tok)
+				val = (cur_tok->type == TOK_ERROR ? "quote" : cur_tok->value);
+			else
+				val = "newline";
+			write(2, "minishell: syntax error near unexpected token `", 47);
+			write(2, val, ft_strlen(val));
+			write(2, "'\n", 2);
+			shell->last_exit = 2;
+		}
+		if (ast)
+			execute_ast(shell, ast);
 		free(input);
+		arena_reset(shell->arena);
 	}
 }
 

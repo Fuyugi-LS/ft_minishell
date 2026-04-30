@@ -16,6 +16,8 @@
 #include "libft.h"
 #include <unistd.h>
 #include <stdlib.h>
+#include <sys/stat.h>
+#include <errno.h>
 
 /**
  * path_join - Join a dir and a command name with a '/'
@@ -55,6 +57,8 @@ static char	*find_path(char *cmd, char **envp)
 	char	*candidate;
 	int		i;
 
+	if (!cmd || !*cmd)
+		return (NULL);
 	if (cmd[0] == '/' || cmd[0] == '.')
 		return (cmd);
 	path_env = exe_get_path(envp);
@@ -85,18 +89,32 @@ static char	*find_path(char *cmd, char **envp)
  */
 void	exe_launch(t_cmd *cmd, char **envp)
 {
-	char	*path;
-	void	*err[1];
+	char		*path;
+	void		*err[1];
+	struct stat	st;
 
 	if (!cmd->args || !cmd->args[0])
 		exit(0);
 	path = find_path(cmd->args[0], envp);
-	if (!path || execve(path, cmd->args, envp) == -1)
+	if (!path)
 	{
 		err[0] = cmd->args[0];
 		ft_fprintf(2, "minishell: %s: command not found\n", err);
-		if (path != cmd->args[0])
-			free(path);
 		exit(127);
 	}
+	if (stat(path, &st) == 0 && S_ISDIR(st.st_mode))
+	{
+		err[0] = cmd->args[0];
+		ft_fprintf(2, "minishell: %s: Is a directory\n", err);
+		exit(126);
+	}
+	execve(path, cmd->args, envp);
+	err[0] = cmd->args[0];
+	if (errno == EACCES)
+	{
+		ft_fprintf(2, "minishell: %s: Permission denied\n", err);
+		exit(126);
+	}
+	ft_fprintf(2, "minishell: %s: command not found\n", err);
+	exit(127);
 }

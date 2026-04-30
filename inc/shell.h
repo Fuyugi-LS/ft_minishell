@@ -24,6 +24,7 @@ typedef struct s_shell
 	char		**envp;
 	t_arena		*arena;
 	int			last_exit;
+	int			error_printed;
 }	t_shell;
 
 extern int	g_signal;

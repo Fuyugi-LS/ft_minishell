@@ -8,10 +8,11 @@ SRCS		= minishell.c signals.c \
 			  builtins/env.c builtins/export.c builtins/unset.c \
 			  builtins/dispatch.c \
 			  mem/arena.c \
-			  parser/cmd_table.c \
 			  parser/lexer.c \
 			  parser/parser.c \
 			  parser/expander.c \
+			  parser/wildcard.c \
+			  parser/ast.c \
 			  exe/executor.c \
 			  exe/exe_utils.c \
 			  exe/exe_ctx.c

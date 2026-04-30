@@ -14,109 +14,109 @@
 #include "arena.h"
 #include "ft_fprintf.h"
 #include "libft.h"
+#include <string.h>
 
-static t_token	*new_token(struct s_arena **a, t_token_type t, char *v)
+static char	*arena_substr(t_arena **a, char *s, int start, int len)
 {
-	t_token	*tok;
+	char	*res;
 
-	tok = arena_alloc(a, sizeof(t_token));
-	if (!tok)
+	res = arena_alloc(a, len + 1);
+	if (!res)
 		return (NULL);
-	tok->type = t;
-	tok->value = v;
-	tok->next = NULL;
-	return (tok);
+	ft_memcpy(res, s + start, len);
+	res[len] = '\0';
+	return (res);
 }
 
-static t_token	*tok_op(struct s_arena **a, char *s, int *i)
+static t_token_type	get_type(char *s)
 {
-	if (s[*i] == '|')
-	{
-		(*i)++;
-		return (new_token(a, TOK_PIPE, NULL));
-	}
-	if (s[*i] == '<' && s[*i + 1] == '<')
-	{
-		(*i) += 2;
-		return (new_token(a, TOK_REDIR_HEREDOC, NULL));
-	}
-	if (s[*i] == '>' && s[*i + 1] == '>')
-	{
-		(*i) += 2;
-		return (new_token(a, TOK_REDIR_APPEND, NULL));
-	}
-	if (s[*i] == '<')
-	{
-		(*i)++;
-		return (new_token(a, TOK_REDIR_IN, NULL));
-	}
-	(*i)++;
-	return (new_token(a, TOK_REDIR_OUT, NULL));
+	if (ft_strncmp(s, ">>", 2) == 0)
+		return (TOK_REDIR_APPEND);
+	if (ft_strncmp(s, "<<", 2) == 0)
+		return (TOK_REDIR_HEREDOC);
+	if (ft_strncmp(s, "&&", 2) == 0)
+		return (TOK_AND);
+	if (ft_strncmp(s, "||", 2) == 0)
+		return (TOK_OR);
+	if (s[0] == '&')
+		return (TOK_AMPERSAND);
+	if (s[0] == '|')
+		return (TOK_PIPE);
+	if (s[0] == '<')
+		return (TOK_REDIR_IN);
+	if (s[0] == '>')
+		return (TOK_REDIR_OUT);
+	if (s[0] == '(')
+		return (TOK_LPAREN);
+	if (s[0] == ')')
+		return (TOK_RPAREN);
+	return (TOK_WORD);
 }
 
-static char	*extract_word(struct s_arena **a, char *s, int *i)
+static t_token	*new_token(t_arena **a, char *val, t_token_type type)
 {
+	t_token	*t;
+
+	t = arena_alloc(a, sizeof(t_token));
+	if (!t)
+		return (NULL);
+	t->value = val;
+	t->type = type;
+	t->next = NULL;
+	return (t);
+}
+
+t_token	*tokenize_input(t_arena **arena, char *input)
+{
+	t_token	*head = NULL;
+	t_token	*curr = NULL;
+	int		i = 0;
 	int		start;
-	char	quote;
-	char	*dst;
-	int		len;
-
-	start = *i;
-	quote = 0;
-	while (s[*i])
-	{
-		if (!quote && (s[*i] == '\'' || s[*i] == '"'))
-			quote = s[(*i)++];
-		else if (quote && s[*i] == quote)
-			quote = s[(*i)++] * 0;
-		else if (!quote && (s[*i] == ' ' || s[*i] == '\t'
-				|| s[*i] == '|' || s[*i] == '<' || s[*i] == '>'))
-			break ;
-		else
-			(*i)++;
-	}
-	len = *i - start;
-	dst = arena_alloc(a, len + 1);
-	if (!dst)
-		return (NULL);
-	ft_memcpy(dst, s + start, len);
-	dst[len] = '\0';
-	return (dst);
-}
-
-/**
- * tokenize_input - Lex raw input into a token list
- * @arena: Arena allocator
- * @input: Raw readline string
- *
- * Return: Head of token list or NULL
- */
-t_token	*tokenize_input(struct s_arena **arena, char *input)
-{
-	t_token	head;
-	t_token	*cur;
-	t_token	*tok;
-	int		i;
+	char	q;
 
 	if (!input)
 		return (NULL);
-	head.next = NULL;
-	cur = &head;
-	i = 0;
 	while (input[i])
 	{
-		while (input[i] == ' ' || input[i] == '\t')
+		while (input[i] && (input[i] == ' ' || (input[i] >= 9 && input[i] <= 13)))
 			i++;
 		if (!input[i])
 			break ;
-		if (input[i] == '|' || input[i] == '<' || input[i] == '>')
-			tok = tok_op(arena, input, &i);
+		start = i;
+		if (ft_strchr("<>|&()", input[i]))
+		{
+			if (ft_strncmp(input + i, ">>", 2) == 0 || ft_strncmp(input + i, "<<", 2) == 0
+				|| ft_strncmp(input + i, "&&", 2) == 0 || ft_strncmp(input + i, "||", 2) == 0)
+				i += 2;
+			else
+				i += 1;
+		}
 		else
-			tok = new_token(arena, TOK_WORD, extract_word(arena, input, &i));
-		if (!tok)
-			return (NULL);
-		cur->next = tok;
-		cur = tok;
+		{
+			q = 0;
+			while (input[i])
+			{
+				if (!q && (input[i] == '\'' || input[i] == '"'))
+					q = input[i];
+				else if (q && input[i] == q)
+					q = 0;
+				else if (!q && (ft_strchr("<>|&()", input[i]) || input[i] == ' ' || (input[i] >= 9 && input[i] <= 13)))
+					break ;
+				i++;
+			}
+			if (q)
+				return (new_token(arena, "quote", TOK_ERROR));
+		}
+		if (!head)
+		{
+			head = new_token(arena, arena_substr(arena, input, start, i - start), get_type(input + start));
+			curr = head;
+		}
+		else
+		{
+			curr->next = new_token(arena, arena_substr(arena, input, start, i - start), get_type(input + start));
+			curr = curr->next;
+		}
 	}
-	return (head.next);
+	return (head);
 }

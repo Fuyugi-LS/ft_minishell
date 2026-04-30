@@ -52,27 +52,34 @@ int	exe_ctx_init(t_exec_ctx *ctx)
 	int	i;
 
 	ctx->pids = malloc(sizeof(pid_t) * ctx->count);
-	ctx->pipes = malloc(sizeof(int[2]) * (ctx->count - 1));
-	if (!ctx->pids || !ctx->pipes)
+	if (!ctx->pids)
 	{
 		ft_fprintf(2, "minishell: malloc failed\n", NULL);
-		free(ctx->pids);
-		ctx->pids = NULL;
-		free(ctx->pipes);
-		ctx->pipes = NULL;
 		return (1);
 	}
-	i = -1;
-	while (++i < ctx->count - 1)
+	ctx->pipes = NULL;
+	if (ctx->count > 1)
 	{
-		if (pipe(ctx->pipes[i]) == -1)
+		ctx->pipes = malloc(sizeof(int[2]) * (ctx->count - 1));
+		if (!ctx->pipes)
 		{
-			ft_fprintf(2, "minishell: pipe failed\n", NULL);
+			ft_fprintf(2, "minishell: malloc failed\n", NULL);
 			free(ctx->pids);
 			ctx->pids = NULL;
-			free(ctx->pipes);
-			ctx->pipes = NULL;
 			return (1);
+		}
+		i = -1;
+		while (++i < ctx->count - 1)
+		{
+			if (pipe(ctx->pipes[i]) == -1)
+			{
+				ft_fprintf(2, "minishell: pipe failed\n", NULL);
+				free(ctx->pids);
+				ctx->pids = NULL;
+				free(ctx->pipes);
+				ctx->pipes = NULL;
+				return (1);
+			}
 		}
 	}
 	return (0);
