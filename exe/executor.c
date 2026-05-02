@@ -16,6 +16,7 @@
 #include "exe_ctx_utils.h"
 #include "exe_launch_utils.h"
 #include "builtin_dispatch.h"
+#include "builtins.h"
 #include "ft_fprintf.h"
 #include "libft.h"
 #include <unistd.h>
@@ -264,6 +265,15 @@ void	execute_commands(t_shell *shell, t_cmd *cmds, int count)
 				return ;
 			}
 			shell->last_exit = run_builtin(shell, args);
+			int last = 0;
+			while (args[last])
+				last++;
+			if (last > 0)
+			{
+				char *env_arg = ft_strjoin("_=", args[last - 1]);
+				update_env(shell, env_arg);
+				free(env_arg);
+			}
 			dup2(saved_in, STDIN_FILENO);
 			dup2(saved_out, STDOUT_FILENO);
 			close(saved_in);
@@ -284,12 +294,29 @@ void	execute_commands(t_shell *shell, t_cmd *cmds, int count)
 	while (++i < count)
 	{
 		waitpid(ctx.pids[i], &status, 0);
+		if (WIFSIGNALED(status) && WTERMSIG(status) == SIGPIPE)
+			ft_fprintf(2, " Broken pipe\n", NULL);
+		else if (WIFSIGNALED(status) && WTERMSIG(status) == SIGQUIT && i == count - 1)
+			ft_fprintf(2, " Quit\n", NULL);
 		if (i == count - 1)
 		{
 			if (WIFEXITED(status))
 				shell->last_exit = WEXITSTATUS(status);
 			else if (WIFSIGNALED(status))
 				shell->last_exit = 128 + WTERMSIG(status);
+		}
+	}
+	if (count > 0 && cmds[count - 1].args)
+	{
+		char **final_args = expand_cmd_args(shell, cmds[count - 1].args);
+		int last = 0;
+		while (final_args && final_args[last])
+			last++;
+		if (last > 0)
+		{
+			char *env_arg = ft_strjoin("_=", final_args[last - 1]);
+			update_env(shell, env_arg);
+			free(env_arg);
 		}
 	}
 	exe_ctx_free(&ctx);
@@ -320,6 +347,7 @@ void	execute_ast(t_shell *shell, t_node *node)
 	static int	depth = 0;
 	pid_t		pid;
 	int			status;
+	int			status_left;
 
 	if (!node)
 		return ;
@@ -359,7 +387,11 @@ void	execute_ast(t_shell *shell, t_node *node)
 	else if (node->type == NODE_PIPE)
 	{
 		int p[2];
-		if (pipe(p) < 0) return;
+		if (pipe(p) < 0)
+		{
+			ft_fprintf(2, "minishell: pipe failed\n", NULL);
+			return ;
+		}
 		pid = fork();
 		if (pid == 0)
 		{
@@ -380,12 +412,25 @@ void	execute_ast(t_shell *shell, t_node *node)
 		}
 		close(p[0]);
 		close(p[1]);
-		waitpid(pid, &status, 0);
+		waitpid(pid, &status_left, 0);
+		if (WIFSIGNALED(status_left) && WTERMSIG(status_left) == SIGPIPE)
+			ft_fprintf(2, " Broken pipe\n", NULL);
 		waitpid(pid2, &status, 0);
 		if (WIFEXITED(status))
 			shell->last_exit = WEXITSTATUS(status);
 		else if (WIFSIGNALED(status))
+		{
+			if (WTERMSIG(status) == SIGPIPE)
+				ft_fprintf(2, " Broken pipe\n", NULL);
+			else if (WTERMSIG(status) == SIGQUIT)
+				ft_fprintf(2, " Quit\n", NULL);
 			shell->last_exit = 128 + WTERMSIG(status);
+		}
+	}
+	else if (node->type == NODE_SEQ)
+	{
+		execute_ast(shell, node->left);
+		execute_ast(shell, node->right);
 	}
 	depth--;
 }

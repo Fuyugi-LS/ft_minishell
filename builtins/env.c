@@ -13,6 +13,7 @@
 #include "shell.h"
 #include "ft_fprintf.h"
 #include <unistd.h>
+#include "libft.h"
 
 /**
  * builtin_env - Print all environment variables
@@ -28,8 +29,11 @@ int	builtin_env(t_shell *shell)
 	i = -1;
 	while (shell->envp[++i])
 	{
-		a[0] = shell->envp[i];
-		ft_fprintf(1, "%s\n", a);
+		if (ft_strchr(shell->envp[i], '='))
+		{
+			a[0] = shell->envp[i];
+			ft_fprintf(1, "%s\n", a);
+		}
 	}
 	return (0);
 }

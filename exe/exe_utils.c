@@ -60,7 +60,11 @@ static char	*find_path(char *cmd, char **envp)
 	if (!cmd || !*cmd)
 		return (NULL);
 	if (cmd[0] == '/' || cmd[0] == '.')
-		return (cmd);
+	{
+		if (access(cmd, F_OK) == 0)
+			return (cmd);
+		return (NULL);
+	}
 	path_env = exe_get_path(envp);
 	if (!path_env)
 		return (cmd);
@@ -99,7 +103,10 @@ void	exe_launch(t_cmd *cmd, char **envp)
 	if (!path)
 	{
 		err[0] = cmd->args[0];
-		ft_fprintf(2, "minishell: %s: command not found\n", err);
+		if (cmd->args[0][0] == '/' || cmd->args[0][0] == '.')
+			ft_fprintf(2, "minishell: %s: No such file or directory\n", err);
+		else
+			ft_fprintf(2, "minishell: %s: command not found\n", err);
 		exit(127);
 	}
 	if (stat(path, &st) == 0 && S_ISDIR(st.st_mode))

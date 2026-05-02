@@ -35,8 +35,8 @@ int	str_len__fprintf(const char *str)
  */
 void	put_nstr__fprintf(int fd, const char *str, int n)
 {
-	while (*str && n--)
-		write(fd, str++, 1);
+	if (str && n > 0)
+		write(fd, str, n);
 }
 
 /**

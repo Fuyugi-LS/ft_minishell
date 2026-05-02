@@ -110,7 +110,7 @@ static int	fill_cmd(t_shell *shell, t_cmd *cmd, t_token **tok)
 		return (1);
 	ft_memset(cmd->args, 0, sizeof(char *) * 1024);
 	while (t && t->type != TOK_PIPE && t->type != TOK_AND && t->type != TOK_OR 
-		&& t->type != TOK_LPAREN && t->type != TOK_RPAREN)
+		&& t->type != TOK_LPAREN && t->type != TOK_RPAREN && t->type != TOK_SEMICOLON)
 	{
 		if (t->type == TOK_WORD)
 			cmd->args[wi++] = t->value;
@@ -152,7 +152,7 @@ t_cmd	*parse_tokens(t_shell *shell, t_token **tokens, int *cmd_count)
 		return (NULL);
 	}
 	if ((*tokens)->type == TOK_PIPE || (*tokens)->type == TOK_AND || (*tokens)->type == TOK_OR 
-		|| (*tokens)->type == TOK_AMPERSAND || (*tokens)->type == TOK_ERROR)
+		|| (*tokens)->type == TOK_AMPERSAND || (*tokens)->type == TOK_ERROR || (*tokens)->type == TOK_SEMICOLON)
 	{
 		shell->last_exit = 2;
 		return (NULL);

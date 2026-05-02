@@ -72,17 +72,20 @@ void	run_loop(t_shell *shell)
  *
  * Return: last exit status
  */
+#include "builtins.h"
+
 int	main(int argc, char **argv, char **envp)
 {
 	t_shell	shell;
 
 	(void)argc;
 	(void)argv;
-	shell.envp = envp;
+	shell.envp = NULL;
 	shell.last_exit = 0;
 	shell.arena = arena_init(ARENA_BLOCK_SIZE);
 	if (!shell.arena)
 		return (1);
+	init_env(&shell, envp);
 	init_signals();
 	run_loop(&shell);
 	arena_destroy(shell.arena);

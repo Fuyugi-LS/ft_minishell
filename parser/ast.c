@@ -113,7 +113,33 @@ static t_node	*parse_logical(t_shell *shell, t_token **tokens)
 	return (node);
 }
 
+static t_node	*parse_sequence(t_shell *shell, t_token **tokens)
+{
+	t_node	*node;
+	t_node	*tmp;
+
+	node = parse_logical(shell, tokens);
+	if (!node)
+		return (NULL);
+	while (*tokens && (*tokens)->type == TOK_SEMICOLON)
+	{
+		*tokens = (*tokens)->next;
+		if (!*tokens)
+			return (node);
+		tmp = new_node(&shell->arena, NODE_SEQ);
+		tmp->left = node;
+		tmp->right = parse_sequence(shell, tokens);
+		if (!tmp->right)
+		{
+			/* Trailing semicolon is fine in many shells, but let's be careful */
+			return (node);
+		}
+		node = tmp;
+	}
+	return (node);
+}
+
 t_node	*parse_ast(t_shell *shell, t_token **tokens)
 {
-	return (parse_logical(shell, tokens));
+	return (parse_sequence(shell, tokens));
 }

@@ -10,8 +10,9 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "ft_fprintf.h"
 #include <unistd.h>
+#include "ft_fprintf.h"
+#include "libft.h"
 
 /**
  * check_n_flag - Check if argument is a valid -n flag
@@ -45,7 +46,8 @@ int	builtin_echo(char **args)
 {
 	int		i;
 	int		newline;
-	void	*prt_args[1];
+	char	buf[4096];
+	int		pos;
 
 	i = 1;
 	newline = 1;
@@ -54,15 +56,18 @@ int	builtin_echo(char **args)
 		newline = 0;
 		i++;
 	}
+	pos = 0;
+	ft_memset(buf, 0, sizeof(buf));
 	while (args[i])
 	{
-		prt_args[0] = (void *)args[i];
-		ft_fprintf(1, "%s", prt_args);
-		if (args[i + 1])
-			write(1, " ", 1);
+		ft_strlcpy(buf + pos, args[i], sizeof(buf) - pos);
+		pos += ft_strlen(args[i]);
+		if (args[i + 1] && pos < (int)sizeof(buf) - 1)
+			buf[pos++] = ' ';
 		i++;
 	}
-	if (newline)
-		write(1, "\n", 1);
+	if (newline && pos < (int)sizeof(buf) - 1)
+		buf[pos++] = '\n';
+	write(1, buf, pos);
 	return (0);
 }

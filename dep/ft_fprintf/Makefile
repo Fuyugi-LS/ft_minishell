@@ -22,7 +22,7 @@ RESET		= \033[0m
 all: $(NAME)
 
 %.o: %.c
-	@$(CC) $(CFLAGS) -c $< -o $@
+	@$(CC) $(CFLAGS) -c $< -o $@ -I../libft
 	@echo "Compiled: $(CYAN)$<$(RESET)"
 
 $(NAME): $(OBJS)

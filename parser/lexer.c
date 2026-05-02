@@ -50,6 +50,8 @@ static t_token_type	get_type(char *s)
 		return (TOK_LPAREN);
 	if (s[0] == ')')
 		return (TOK_RPAREN);
+	if (s[0] == ';')
+		return (TOK_SEMICOLON);
 	return (TOK_WORD);
 }
 
@@ -83,7 +85,7 @@ t_token	*tokenize_input(t_arena **arena, char *input)
 		if (!input[i])
 			break ;
 		start = i;
-		if (ft_strchr("<>|&()", input[i]))
+		if (ft_strchr("<>|&();", input[i]))
 		{
 			if (ft_strncmp(input + i, ">>", 2) == 0 || ft_strncmp(input + i, "<<", 2) == 0
 				|| ft_strncmp(input + i, "&&", 2) == 0 || ft_strncmp(input + i, "||", 2) == 0)
@@ -100,7 +102,7 @@ t_token	*tokenize_input(t_arena **arena, char *input)
 					q = input[i];
 				else if (q && input[i] == q)
 					q = 0;
-				else if (!q && (ft_strchr("<>|&()", input[i]) || input[i] == ' ' || (input[i] >= 9 && input[i] <= 13)))
+				else if (!q && (ft_strchr("<>|&();", input[i]) || input[i] == ' ' || (input[i] >= 9 && input[i] <= 13)))
 					break ;
 				i++;
 			}

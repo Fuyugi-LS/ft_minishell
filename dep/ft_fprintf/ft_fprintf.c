@@ -11,72 +11,49 @@
 /* ************************************************************************** */
 
 #include "ft_fprintf.h"
+#include <stdarg.h>
+#include "libft.h"
 
-/**
- * format_check - process printf format specifier
- * @fd: file descriptor
- * @a: format character
- * @args: arguments list
- * @return: number of characters printed
- */
-static int	format_check__fprintf(int fd, char a, void **args, int *arg_idx)
+static void	append_str(char *buf, int *pos, const char *s)
 {
-	if (a == 'c')
-		return (format_char__fprintf(fd, (char)(intptr_t)args[(*arg_idx)++]));
-	else if (a == 's')
-		return (format_str__fprintf(fd, (char *)args[(*arg_idx)++]));
-	else if (a == 'p')
-		return (format_ptr__fprintf(fd, args[(*arg_idx)++]));
-	else if (a == 'd' || a == 'i')
-		return (format_int__fprintf(fd, (int)(intptr_t)args[(*arg_idx)++]));
-	else if (a == 'u')
-		return (format_uint__fprintf(fd, (unsigned int)(uintptr_t)args[
-				(*arg_idx)++]));
-	else if (a == 'x')
-		return (format_hex__fprintf(fd, (unsigned int)(uintptr_t)args[
-				(*arg_idx)++], 0));
-	else if (a == 'X')
-		return (format_hex__fprintf(fd, (unsigned int)(uintptr_t)args[
-				(*arg_idx)++], 1));
-	else if (a == '%')
-		return (format_pct__fprintf(fd));
-	else
-	{
-		write(fd, "%", 1);
-		write(fd, &a, 1);
-		return (2);
-	}
+	while (s && *s && *pos < 4095)
+		buf[(*pos)++] = *s++;
 }
 
-/**
- * ft_fprintf - formatted output to file descriptor
- * @fd: file descriptor
- * @inp: format string
- * @args: array of void pointers (arguments)
- * @return: total characters printed, or -1 on error
- */
+static void	append_int(char *buf, int *pos, long n)
+{
+	char	*s;
+
+	s = ft_itoa((int)n);
+	append_str(buf, pos, s);
+	free(s);
+}
+
 int	ft_fprintf(int fd, const char *inp, void **args)
 {
-	int		count;
+	char	buf[4096];
+	int		pos;
 	int		arg_idx;
 
-	if (!inp)
-		return (-1);
-	count = 0;
+	pos = 0;
 	arg_idx = 0;
-	while (*inp)
+	ft_memset(buf, 0, sizeof(buf));
+	while (*inp && pos < 4095)
 	{
-		while (*inp)
+		if (*inp == '%' && inp[1])
 		{
-			if (*inp == '%')
-				count += format_check__fprintf(fd, *++inp, args, &arg_idx);
-			else
-			{
-				write(fd, inp, 1);
-				count ++;
-			}
+			inp++;
+			if (*inp == 's')
+				append_str(buf, &pos, (char *)args[arg_idx++]);
+			else if (*inp == 'd' || *inp == 'i')
+				append_int(buf, &pos, (long)(intptr_t)args[arg_idx++]);
+			else if (*inp == '%')
+				buf[pos++] = '%';
 			inp++;
 		}
+		else
+			buf[pos++] = *inp++;
 	}
-	return (count);
+	write(fd, buf, pos);
+	return (pos);
 }

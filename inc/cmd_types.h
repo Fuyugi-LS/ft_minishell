@@ -26,6 +26,7 @@ typedef enum e_token_type
 	TOK_LPAREN,
 	TOK_RPAREN,
 	TOK_AMPERSAND,
+	TOK_SEMICOLON,
 	TOK_EOF,
 	TOK_ERROR
 }	t_token_type;
@@ -64,7 +65,8 @@ typedef enum e_node_type
 	NODE_PIPE,
 	NODE_AND,
 	NODE_OR,
-	NODE_SUBSHELL
+	NODE_SUBSHELL,
+	NODE_SEQ
 }	t_node_type;
 
 typedef struct s_node

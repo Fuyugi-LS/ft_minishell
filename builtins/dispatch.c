@@ -44,9 +44,9 @@ int	run_builtin(t_shell *shell, char **args)
 	if (ft_strncmp(args[0], "echo", 5) == 0)
 		return (builtin_echo(args));
 	if (ft_strncmp(args[0], "pwd", 4) == 0)
-		return (builtin_pwd());
+		return (builtin_pwd(shell));
 	if (ft_strncmp(args[0], "cd", 3) == 0)
-		return (builtin_cd(args));
+		return (builtin_cd(shell, args));
 	if (ft_strncmp(args[0], "env", 4) == 0)
 		return (builtin_env(shell));
 	if (ft_strncmp(args[0], "export", 7) == 0)

@@ -14,6 +14,8 @@
 #include "ft_fprintf.h"
 #include "libft.h"
 #include <stdlib.h>
+#include <unistd.h>
+#include "exe_ctx_utils.h"
 
 static void	sort_env(char **env, int len)
 {
@@ -91,7 +93,7 @@ static int	is_valid_id(char *s)
 	return (1);
 }
 
-static void	update_env(t_shell *shell, char *arg)
+void	update_env(t_shell *shell, char *arg)
 {
 	int		i;
 	int		len;
@@ -129,6 +131,42 @@ static void	update_env(t_shell *shell, char *arg)
 	new_envp[len + 1] = NULL;
 	shell->envp = new_envp;
 	free(name);
+}
+
+void	init_env(t_shell *shell, char **envp)
+{
+	int		len;
+	int		i;
+	char	*shlvl;
+	char	*new_lvl;
+	char	cwd[1024];
+
+	len = 0;
+	while (envp[len])
+		len++;
+	shell->envp = malloc(sizeof(char *) * (len + 1));
+	i = -1;
+	while (++i < len)
+		shell->envp[i] = ft_strdup(envp[i]);
+	shell->envp[len] = NULL;
+	shlvl = shell_get_env(shell->envp, "SHLVL");
+	if (shlvl)
+	{
+		new_lvl = ft_strjoin("SHLVL=", ft_itoa(ft_atoi(shlvl) + 1));
+		update_env(shell, new_lvl);
+		free(new_lvl);
+	}
+	else
+		update_env(shell, "SHLVL=1");
+	if (!shell_get_env(shell->envp, "PWD"))
+	{
+		if (getcwd(cwd, 1024))
+		{
+			new_lvl = ft_strjoin("PWD=", cwd);
+			update_env(shell, new_lvl);
+			free(new_lvl);
+		}
+	}
 }
 
 int	builtin_export(t_shell *shell, char **args)
