@@ -29,6 +29,7 @@
 #include "expander.h"
 #include "parser.h"
 #include "parser_utils.h"
+#include <stdint.h>
 
 static void	close_all_pipes(int (*pipes)[2], int count)
 {
@@ -129,6 +130,7 @@ static void	process_heredoc_list(t_redir *r)
 {
 	char	*line;
 	int		fd;
+	int		line_num;
 
 	while (r)
 	{
@@ -137,12 +139,13 @@ static void	process_heredoc_list(t_redir *r)
 			fd = open(".heredoc_tmp", O_WRONLY | O_CREAT | O_TRUNC, 0644);
 			if (fd < 0)
 				return ;
+			line_num = 1;
 			while (1)
 			{
 				line = readline("");
 				if (!line)
 				{
-					ft_fprintf(2, "minishell: warning: here-document delimited by end-of-file (wanted `%s')\n", (void *[]){r->file});
+					ft_fprintf(2, "minishell: warning: here-document at line %d delimited by end-of-file (wanted `%s')\n", (void *[]){(void *)(intptr_t)line_num, r->file});
 					break ;
 				}
 				if (ft_strncmp(line, r->file, ft_strlen(r->file) + 1) == 0)
@@ -153,6 +156,7 @@ static void	process_heredoc_list(t_redir *r)
 				write(fd, line, ft_strlen(line));
 				write(fd, "\n", 1);
 				free(line);
+				line_num++;
 			}
 			close(fd);
 		}
@@ -219,9 +223,17 @@ static void	run_child(t_exec_ctx *ctx, int i)
 		wire_child_fds(ctx, i);
 		args = expand_cmd_args(ctx->shell, ctx->cmds[i].args);
 		if (args && args[0] && is_builtin(args[0]))
+		{
+			char *env_arg = ft_strjoin("_=", args[0]);
+			if (env_arg)
+			{
+				update_env(ctx->shell, env_arg);
+				free(env_arg);
+			}
 			exit(run_builtin(ctx->shell, args));
+		}
 		ctx->cmds[i].args = args;
-		exe_launch(&ctx->cmds[i], ctx->shell->envp);
+		exe_launch(&ctx->cmds[i], ctx->shell);
 	}
 	ctx->pids[i] = pid;
 }
@@ -264,15 +276,25 @@ void	execute_commands(t_shell *shell, t_cmd *cmds, int count)
 				close(saved_out);
 				return ;
 			}
-			shell->last_exit = run_builtin(shell, args);
-			int last = 0;
-			while (args[last])
-				last++;
-			if (last > 0)
 			{
-				char *env_arg = ft_strjoin("_=", args[last - 1]);
-				update_env(shell, env_arg);
-				free(env_arg);
+				char *env_arg = ft_strjoin("_=", args[0]);
+				if (env_arg)
+				{
+					update_env(shell, env_arg);
+					free(env_arg);
+				}
+			}
+			shell->last_exit = run_builtin(shell, args);
+			{
+				int last = 0;
+				while (args[last])
+					last++;
+				if (last > 0)
+				{
+					char *env_arg = ft_strjoin("_=", args[last - 1]);
+					update_env(shell, env_arg);
+					free(env_arg);
+				}
 			}
 			dup2(saved_in, STDIN_FILENO);
 			dup2(saved_out, STDOUT_FILENO);
@@ -306,7 +328,7 @@ void	execute_commands(t_shell *shell, t_cmd *cmds, int count)
 				shell->last_exit = 128 + WTERMSIG(status);
 		}
 	}
-	if (count > 0 && cmds[count - 1].args)
+	if (count > 0 && cmds[count - 1].args && shell->last_exit == 0)
 	{
 		char **final_args = expand_cmd_args(shell, cmds[count - 1].args);
 		int last = 0;

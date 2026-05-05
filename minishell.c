@@ -12,7 +12,9 @@
 
 #include <readline/readline.h>
 #include <readline/history.h>
+#include <unistd.h>
 #include "shell.h"
+#include "get_next_line.h"
 #include "signal_minishell.h"
 #include "ft_fprintf.h"
 #include "parser.h"
@@ -30,17 +32,32 @@ void	run_loop(t_shell *shell)
 
 	while (1)
 	{
-		rl_on_new_line();
-		rl_replace_line("", 0);
-		input = readline("minishell$ ");
-		if (!input)
+		if (isatty(0))
 		{
-			if (isatty(0))
+			rl_on_new_line();
+			rl_replace_line("", 0);
+			input = readline("minishell$ ");
+			if (!input)
+			{
 				write(1, "exit\n", 5);
-			break ;
+				break ;
+			}
+			if (*input)
+				add_history(input);
 		}
-		if (*input)
-			add_history(input);
+		else
+		{
+			int		ilen;
+
+			write(1, "minishell$ ", 11);
+			input = get_next_line(0);
+			if (!input)
+				break ;
+			write(1, "\n", 1);
+			ilen = (int)ft_strlen(input);
+			if (ilen > 0 && input[ilen - 1] == '\n')
+				input[ilen - 1] = '\0';
+		}
 		shell->error_printed = 0;
 		tokens = tokenize_input(&shell->arena, input);
 		cur_tok = tokens;
@@ -57,8 +74,10 @@ void	run_loop(t_shell *shell)
 			write(2, "'\n", 2);
 			shell->last_exit = 2;
 		}
-		if (ast)
+		if (ast && !shell->error_printed && !cur_tok)
 			execute_ast(shell, ast);
+		else if (ast)
+			shell->last_exit = 2;
 		free(input);
 		arena_reset(shell->arena);
 	}
@@ -82,12 +101,14 @@ int	main(int argc, char **argv, char **envp)
 	(void)argv;
 	shell.envp = NULL;
 	shell.last_exit = 0;
+	shell.in_child = 0;
 	shell.arena = arena_init(ARENA_BLOCK_SIZE);
 	if (!shell.arena)
 		return (1);
 	init_env(&shell, envp);
 	init_signals();
 	run_loop(&shell);
+	free_env(&shell);
 	arena_destroy(shell.arena);
 	return (shell.last_exit);
 }

@@ -14,7 +14,8 @@
 # define EXE_LAUNCH_UTILS_H
 
 # include "cmd_types.h"
+# include "shell.h"
 
-void	exe_launch(t_cmd *cmd, char **envp);
+void	exe_launch(t_cmd *cmd, t_shell *shell);
 
 #endif

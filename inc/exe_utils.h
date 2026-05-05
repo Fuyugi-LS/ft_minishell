@@ -14,8 +14,9 @@
 # define EXE_UTILS_H
 
 # include "exe_struct.h"
+# include "shell.h"
 
-void	exe_launch(t_cmd *cmd, char **envp);
+void	exe_launch(t_cmd *cmd, t_shell *shell);
 int		exe_ctx_init(t_exec_ctx *ctx);
 void	exe_ctx_free(t_exec_ctx *ctx);
 char	*exe_get_path(char **envp);

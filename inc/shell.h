@@ -25,6 +25,7 @@ typedef struct s_shell
 	t_arena		*arena;
 	int			last_exit;
 	int			error_printed;
+	int			in_child;
 }	t_shell;
 
 extern int	g_signal;

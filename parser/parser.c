@@ -85,7 +85,6 @@ int	parse_redirection(t_shell *shell, t_redir **redirs, t_token **t)
 		return (1);
 	}
 	val = cur->next->value;
-	val = finalize_word(val);
 	if (cur->type == TOK_REDIR_IN)
 		add_redir_node(shell, redirs, REDIR_IN, val);
 	else if (cur->type == TOK_REDIR_OUT)

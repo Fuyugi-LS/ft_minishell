@@ -96,6 +96,7 @@ static int	is_valid_id(char *s)
 void	update_env(t_shell *shell, char *arg)
 {
 	int		i;
+	int		j;
 	int		len;
 	char	*name;
 	char	*eq;
@@ -106,19 +107,22 @@ void	update_env(t_shell *shell, char *arg)
 		name = ft_substr(arg, 0, eq - arg);
 	else
 		name = ft_strdup(arg);
-	i = -1;
-	while (shell->envp[++i])
+	i = 0;
+	while (shell->envp[i])
 	{
 		if (ft_strncmp(shell->envp[i], name, ft_strlen(name)) == 0
 			&& (shell->envp[i][ft_strlen(name)] == '=' || !shell->envp[i][ft_strlen(name)]))
 		{
-			if (eq)
+			free(shell->envp[i]);
+			j = i;
+			while (shell->envp[j])
 			{
-				shell->envp[i] = ft_strdup(arg);
+				shell->envp[j] = shell->envp[j + 1];
+				j++;
 			}
-			free(name);
-			return ;
 		}
+		else
+			i++;
 	}
 	len = 0;
 	while (shell->envp[len])
@@ -129,8 +133,25 @@ void	update_env(t_shell *shell, char *arg)
 		new_envp[i] = shell->envp[i];
 	new_envp[len] = ft_strdup(arg);
 	new_envp[len + 1] = NULL;
+	free(shell->envp);
 	shell->envp = new_envp;
 	free(name);
+}
+
+void	free_env(t_shell *shell)
+{
+	int	i;
+
+	if (!shell->envp)
+		return ;
+	i = 0;
+	while (shell->envp[i])
+	{
+		free(shell->envp[i]);
+		i++;
+	}
+	free(shell->envp);
+	shell->envp = NULL;
 }
 
 void	init_env(t_shell *shell, char **envp)
@@ -152,9 +173,11 @@ void	init_env(t_shell *shell, char **envp)
 	shlvl = shell_get_env(shell->envp, "SHLVL");
 	if (shlvl)
 	{
-		new_lvl = ft_strjoin("SHLVL=", ft_itoa(ft_atoi(shlvl) + 1));
+		char *itoa_res = ft_itoa(ft_atoi(shlvl) + 1);
+		new_lvl = ft_strjoin("SHLVL=", itoa_res);
 		update_env(shell, new_lvl);
 		free(new_lvl);
+		free(itoa_res);
 	}
 	else
 		update_env(shell, "SHLVL=1");

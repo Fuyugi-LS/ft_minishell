@@ -15,7 +15,9 @@ SRCS		= minishell.c signals.c \
 			  parser/ast.c \
 			  exe/executor.c \
 			  exe/exe_utils.c \
-			  exe/exe_ctx.c
+			  exe/exe_ctx.c \
+			  gnl/get_next_line.c \
+			  gnl/get_next_line_utils.c
 OBJ			= $(SRCS:.c=.o)
 
 FPRINTF_DIR	= dep/ft_fprintf
@@ -24,7 +26,7 @@ FPRINTF_LIB	= $(FPRINTF_DIR)/libftfprintf.a
 LIBFT_DIR	= dep/libft
 LIBFT_LIB	= $(LIBFT_DIR)/libft.a
 
-INC			= -Iinc -Idep/ft_fprintf -Idep/libft
+INC			= -Iinc -Idep/ft_fprintf -Idep/libft -Ignl
 LIBS		= -L$(FPRINTF_DIR) -lftfprintf -L$(LIBFT_DIR) -lft -lreadline
 
 all: $(NAME)

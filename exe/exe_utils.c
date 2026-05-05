@@ -86,14 +86,13 @@ static char	*find_path(char *cmd, char **envp)
 	return (NULL);
 }
 
-/**
- * exe_launch - Resolve path and execve, or exit 127 on fail
- * @cmd: The single command to run
- * @envp: Environment
- */
-void	exe_launch(t_cmd *cmd, char **envp)
+#include "shell.h"
+#include "builtins.h"
+
+void	exe_launch(t_cmd *cmd, t_shell *shell)
 {
 	char		*path;
+	char		**envp = shell->envp;
 	void		*err[1];
 	struct stat	st;
 
@@ -115,12 +114,25 @@ void	exe_launch(t_cmd *cmd, char **envp)
 		ft_fprintf(2, "minishell: %s: Is a directory\n", err);
 		exit(126);
 	}
-	execve(path, cmd->args, envp);
+	{
+		char *env_arg = ft_strjoin("_=", path);
+		if (env_arg)
+		{
+			update_env(shell, env_arg);
+			free(env_arg);
+		}
+	}
+	execve(path, cmd->args, shell->envp);
 	err[0] = cmd->args[0];
 	if (errno == EACCES)
 	{
 		ft_fprintf(2, "minishell: %s: Permission denied\n", err);
 		exit(126);
+	}
+	if (errno == ENOENT)
+	{
+		ft_fprintf(2, "minishell: %s: No such file or directory\n", err);
+		exit(127);
 	}
 	ft_fprintf(2, "minishell: %s: command not found\n", err);
 	exit(127);
