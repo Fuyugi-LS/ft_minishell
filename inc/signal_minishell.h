@@ -13,6 +13,10 @@
 #ifndef SIGNAL_MINISHELL_H
 # define SIGNAL_MINISHELL_H
 
+# include <signal.h>
+
 void	init_signals(void);
+void	signals_child_reset(void);
+void	signals_heredoc_mode(void);
 
 #endif

@@ -69,8 +69,12 @@ static int	open_pipes(t_exec_context *context)
 	return (0);
 }
 
-int	exe_context_init(t_exec_context *context)
+int	exe_context_init(t_exec_context *context, t_command *cmds,
+		int count, t_shell_data *shell)
 {
+	context->cmds = cmds;
+	context->count = count;
+	context->shell = shell;
 	context->pids = malloc(sizeof (pid_t) * context->count);
 	if (!context->pids)
 	{

@@ -16,28 +16,39 @@
 #include <readline/readline.h>
 #include "ft_fprintf.h"
 
-/**
- * handle_sigint - Handle Ctrl+C (SIGINT)
- * @sig: Signal number
- *
- * Prints a newline and resets the readline prompt,
- * perfectly mimicking bash behavior.
- */
 static void	handle_sigint(int sig)
 {
 	(void)sig;
 	write(1, "\n", 1);
-	rl_on_new_line();
-	rl_replace_line("", 0);
-	rl_redisplay();
+	if (rl_readline_state & RL_STATE_READCMD)
+	{
+		rl_on_new_line();
+		rl_replace_line("", 0);
+		rl_redisplay();
+	}
 }
 
-/**
- * init_signals - Initialize signal handlers for the REPL
- *
- * Configures SIGINT to be caught and SIGQUIT to be ignored.
- * Uses Absolute Guarding for sigaction().
- */
+void	signals_child_reset(void)
+{
+	struct sigaction	sa;
+
+	sa.sa_handler = SIG_DFL;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = 0;
+	sigaction(SIGINT, &sa, NULL);
+	sigaction(SIGQUIT, &sa, NULL);
+}
+
+void	signals_heredoc_mode(void)
+{
+	struct sigaction	sa;
+
+	sa.sa_handler = handle_sigint;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = 0;
+	sigaction(SIGINT, &sa, NULL);
+}
+
 void	init_signals(void)
 {
 	struct sigaction	sa_int;
@@ -46,7 +57,7 @@ void	init_signals(void)
 
 	sa_int.sa_handler = handle_sigint;
 	sigemptyset(&sa_int.sa_mask);
-	sa_int.sa_flags = 0;
+	sa_int.sa_flags = SA_RESTART;
 	if (sigaction(SIGINT, &sa_int, NULL) < 0)
 	{
 		err_args[0] = (void *)"sigaction (SIGINT) failed";

@@ -77,8 +77,10 @@ static void	run_iteration(t_shell_data *shell, char *input)
 		handle_error_message(cur_tok, ast, shell);
 	if (ast && !shell->error_printed && !cur_tok)
 	{
-		traverse_ast_heredocs(ast);
-		execute_ast(shell, ast);
+		if (traverse_ast_heredocs(ast))
+			shell->last_exit = 130;
+		else
+			execute_ast(shell, ast);
 	}
 	else if (ast)
 		shell->last_exit = 2;

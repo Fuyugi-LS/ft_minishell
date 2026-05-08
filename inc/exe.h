@@ -18,6 +18,6 @@
 
 void	execute_commands(t_shell_data *shell, t_command *cmds, int count);
 void	execute_ast(t_shell_data *shell, t_ast_node *node);
-void	traverse_ast_heredocs(t_ast_node *node);
+int		traverse_ast_heredocs(t_ast_node *node);
 
 #endif

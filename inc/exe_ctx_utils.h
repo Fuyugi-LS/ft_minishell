@@ -15,7 +15,8 @@
 
 # include "exe_struct.h"
 
-int		exe_context_init(t_exec_context *context);
+int		exe_context_init(t_exec_context *context, t_command *cmds,
+			int count, t_shell_data *shell);
 void	exe_context_free(t_exec_context *context);
 char	*exe_get_path(char **envp);
 char	*shell_get_env(char **envp, char *key);

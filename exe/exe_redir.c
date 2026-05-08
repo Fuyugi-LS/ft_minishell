@@ -18,11 +18,11 @@
 #include "expander.h"
 #include "parser.h"
 #include "arena.h"
+#include "signal_minishell.h"
 #include <unistd.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <readline/readline.h>
 #include <stdint.h>
 
 static int	setup_redir_fd(t_redirect *r, char *val)
@@ -111,48 +111,48 @@ int	setup_redirs(t_shell_data *shell, t_redirect *r)
 	return (0);
 }
 
-static void	write_heredoc(int fd, t_redirect *r)
+static int	write_heredoc(int fd, t_redirect *r)
 {
-	char	*line;
-	int		lnum;
+	char	buf[4096];
+	ssize_t	n;
 
-	if (!isatty(STDIN_FILENO))
-		return ;
-	lnum = 1;
-	line = readline("");
-	while (line)
+	while (1)
 	{
-		if (ft_strncmp(line, r->file, ft_strlen(r->file) + 1) == 0)
-		{
-			free(line);
-			return ;
-		}
-		write(fd, line, ft_strlen(line));
+		if (isatty(STDIN_FILENO))
+			write(1, "> ", 2);
+		n = read(STDIN_FILENO, buf, sizeof(buf) - 1);
+		if (n <= 0)
+			return (1);
+		buf[n] = '\0';
+		if (buf[n - 1] == '\n')
+			buf[--n] = '\0';
+		if (ft_strncmp(buf, r->file, ft_strlen(r->file) + 1) == 0)
+			return (0);
+		write(fd, buf, n);
 		write(fd, "\n", 1);
-		free(line);
-		lnum++;
-		line = readline("");
 	}
-	ft_fprintf(2, "minishell: warning: here-document at line %d"
-		" delimited by end-of-file (wanted `%s')\n",
-		(void *[]){(void *)(intptr_t)lnum, r->file});
 }
 
-void	process_heredoc_list(t_redirect *r)
+int	process_heredoc_list(t_redirect *r)
 {
 	int	fd;
+	int	res;
 
-	while (r)
+	signals_heredoc_mode();
+	res = 0;
+	while (r && !res)
 	{
 		if (r->type == REDIR_HEREDOC)
 		{
 			fd = open(".heredoc_tmp", O_WRONLY | O_CREAT | O_TRUNC, 0644);
 			if (fd >= 0)
 			{
-				write_heredoc(fd, r);
+				res = write_heredoc(fd, r);
 				close(fd);
 			}
 		}
 		r = r->next;
 	}
+	init_signals();
+	return (res);
 }

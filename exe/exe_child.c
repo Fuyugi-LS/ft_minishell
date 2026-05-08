@@ -22,6 +22,7 @@
 #include "expander.h"
 #include "parser.h"
 #include "arena.h"
+#include "signal_minishell.h"
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/wait.h>
@@ -75,6 +76,7 @@ char	**expand_cmd_args(t_shell_data *shell, char **args)
 
 void	run_pipe_child(t_shell_data *shell, t_ast_node *node, int *p, int side)
 {
+	signals_child_reset();
 	if (side == 0)
 	{
 		close(p[0]);
@@ -101,6 +103,7 @@ static void	exec_in_child_process(t_exec_context *context, int index)
 	char	**args;
 	int		r;
 
+	signals_child_reset();
 	if (index > 0
 		&& dup2(context->pipes[index - 1][0], STDIN_FILENO) == -1)
 		exit(1);

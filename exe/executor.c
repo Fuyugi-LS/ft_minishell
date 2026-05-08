@@ -21,6 +21,7 @@
 #include "libft.h"
 #include "expander.h"
 #include "parser.h"
+#include "signal_minishell.h"
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/wait.h>
@@ -34,7 +35,7 @@ void	run_pipe_child(t_shell_data *shell, t_ast_node *node, int *p, int side);
 void	run_child(t_exec_context *context, int index);
 int		exec_builtin_single(t_shell_data *shell, t_command *cmds, int count);
 void	update_underscore(t_shell_data *shell, char **args);
-void	process_heredoc_list(t_redirect *r);
+int		process_heredoc_list(t_redirect *r);
 void	close_extra_fds(void);
 void	child_cleanup(t_shell_data *shell);
 
@@ -71,10 +72,7 @@ static void	execute_pipe_node(t_shell_data *shell, t_ast_node *node)
 	int		status;
 
 	if (pipe(p) < 0)
-	{
-		ft_fprintf(2, "minishell: pipe failed\n", NULL);
 		return ;
-	}
 	pid = fork();
 	if (pid == 0)
 		run_pipe_child(shell, node, p, 0);
@@ -99,10 +97,7 @@ void	execute_commands(t_shell_data *shell, t_command *cmds, int count)
 
 	if (!cmds || count <= 0 || exec_builtin_single(shell, cmds, count))
 		return ;
-	context.cmds = cmds;
-	context.count = count;
-	context.shell = shell;
-	if (exe_context_init(&context))
+	if (exe_context_init(&context, cmds, count, shell))
 		return ;
 	i = -1;
 	while (++i < count)
@@ -140,22 +135,29 @@ void	execute_ast(t_shell_data *shell, t_ast_node *node)
 		execute_pipe_node(shell, node);
 }
 
-void	traverse_ast_heredocs(t_ast_node *node)
+int	traverse_ast_heredocs(t_ast_node *node)
 {
 	int	i;
+	int	res;
 
 	if (!node)
-		return ;
+		return (0);
 	if (node->type == NODE_COMMAND)
 	{
 		i = -1;
 		while (++i < node->count)
-			process_heredoc_list(node->cmds[i].redirs);
+		{
+			res = process_heredoc_list(node->cmds[i].redirs);
+			if (res)
+				return (res);
+		}
+		return (0);
 	}
-	else
-	{
-		process_heredoc_list(node->redirs);
-		traverse_ast_heredocs(node->left);
-		traverse_ast_heredocs(node->right);
-	}
+	res = process_heredoc_list(node->redirs);
+	if (res)
+		return (res);
+	res = traverse_ast_heredocs(node->left);
+	if (res)
+		return (res);
+	return (traverse_ast_heredocs(node->right));
 }
