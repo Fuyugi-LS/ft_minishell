@@ -15,6 +15,13 @@
 
 # include "shell.h"
 
-char	*expand_word(t_shell *shell, char *s, int *seen_quotes);
+typedef struct s_word_expand
+{
+	char	**res;
+	char	q;
+	int		*seen_q;
+}	t_word_expand;
+
+char	*expand_word(t_shell_data *shell, char *s, int *seen_quotes);
 
 #endif

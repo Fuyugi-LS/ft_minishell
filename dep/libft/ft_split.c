@@ -58,7 +58,7 @@ char	**ft_split(char const *s, char c)
 	if (!s)
 		return (NULL);
 	word_count = ft_count_words(s, c);
-	result = (char **)ft_calloc(word_count + 1, sizeof(char *));
+	result = (char **)ft_calloc(word_count + 1, sizeof (char *));
 	if (!result)
 		return (NULL);
 	i = 0;

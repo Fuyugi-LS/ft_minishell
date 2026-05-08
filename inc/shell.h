@@ -15,19 +15,13 @@
 
 # include "arena.h"
 
-/**
- * struct s_shell - The master shell context passed through the whole program
- * This is the ONE struct that reduces args everywhere.
- */
-typedef struct s_shell
+typedef struct s_shell_data
 {
 	char		**envp;
-	t_arena		*arena;
+	t_mem_arena	*arena;
+	char		*last_input;
 	int			last_exit;
 	int			error_printed;
-	int			in_child;
-}	t_shell;
-
-extern int	g_signal;
+}	t_shell_data;
 
 #endif

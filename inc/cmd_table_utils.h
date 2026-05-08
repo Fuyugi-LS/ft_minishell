@@ -16,6 +16,6 @@
 # include "cmd_types.h"
 # include "arena_struct.h"
 
-t_cmd	*cmd_table_new(t_arena **arena, int count);
+t_command	*cmd_table_new(t_mem_arena **arena, int count);
 
 #endif

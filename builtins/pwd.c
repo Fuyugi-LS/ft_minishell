@@ -22,7 +22,7 @@
  *
  * Return: 0 on success, 1 on failure
  */
-int	builtin_pwd(t_shell *shell)
+int	builtin_pwd(t_shell_data *shell)
 {
 	char	buf[PATH_MAX];
 	char	*env_pwd;

@@ -24,7 +24,7 @@ static void	append_int(char *buf, int *pos, long n)
 {
 	char	*s;
 
-	s = ft_itoa((int)n);
+	s = ft_itoa((int) n);
 	append_str(buf, pos, s);
 	free(s);
 }
@@ -37,7 +37,7 @@ int	ft_fprintf(int fd, const char *inp, void **args)
 
 	pos = 0;
 	arg_idx = 0;
-	ft_memset(buf, 0, sizeof(buf));
+	ft_memset(buf, 0, sizeof (buf));
 	while (*inp && pos < 4095)
 	{
 		if (*inp == '%' && inp[1])

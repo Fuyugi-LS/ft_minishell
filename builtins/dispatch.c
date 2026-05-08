@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   dispatch.c                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vasukmua <vasukmua@student.42bangkok.com>  +#+  +:+       +#+        */
+/*   By: nsongsit <nsongsit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/20 18:00:00 by vasukmua          #+#    #+#             */
-/*   Updated: 2026/04/20 18:00:00 by vasukmua         ###   ########.fr       */
+/*   Updated: 2026/05/08 06:14:41 by nsongsit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,7 @@ int	is_builtin(char *name)
  *
  * Return: exit status of the builtin
  */
-int	run_builtin(t_shell *shell, char **args)
+int	run_builtin(t_shell_data *shell, char **args)
 {
 	if (ft_strncmp(args[0], "echo", 5) == 0)
 		return (builtin_echo(args));

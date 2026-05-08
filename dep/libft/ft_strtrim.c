@@ -37,7 +37,7 @@ char	*ft_strtrim(char const *s1, char const *set)
 		start++;
 	while (end > start && fs_isset(s1[end - 1], set))
 		end--;
-	trimmed = (char *)ft_calloc((end - start + 1), sizeof(*s1));
+	trimmed = (char *)ft_calloc((end - start + 1), sizeof (*s1));
 	if (!trimmed)
 		return (NULL);
 	i = 0;

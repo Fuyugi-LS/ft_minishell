@@ -17,9 +17,9 @@
 
 # define ARENA_BLOCK_SIZE 4096
 
-t_arena	*arena_init(size_t size);
-void	*arena_alloc(t_arena **arena, size_t size);
-void	arena_reset(t_arena *arena);
-void	arena_destroy(t_arena *arena);
+t_mem_arena	*arena_init(size_t size);
+void		*arena_alloc(t_mem_arena **arena, size_t size);
+void		arena_reset(t_mem_arena *arena);
+void		arena_destroy(t_mem_arena *arena);
 
 #endif

@@ -15,12 +15,12 @@
 
 # include <stddef.h>
 
-typedef struct s_arena
+typedef struct s_mem_arena
 {
-	void			*block;
-	size_t			size;
-	size_t			offset;
-	struct s_arena	*next;
-}	t_arena;
+	void				*block;
+	size_t				size;
+	size_t				offset;
+	struct s_mem_arena	*next;
+}	t_mem_arena;
 
 #endif

@@ -16,9 +16,9 @@
 # include "exe_struct.h"
 # include "shell.h"
 
-void	exe_launch(t_cmd *cmd, t_shell *shell);
-int		exe_ctx_init(t_exec_ctx *ctx);
-void	exe_ctx_free(t_exec_ctx *ctx);
+void	exe_launch(t_command *cmd, t_shell_data *shell);
+int		exe_context_init(t_exec_context *context);
+void	exe_context_free(t_exec_context *context);
 char	*exe_get_path(char **envp);
 void	exe_free_split(char **split);
 

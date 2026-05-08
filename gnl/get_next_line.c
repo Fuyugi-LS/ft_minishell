@@ -13,21 +13,6 @@
 #include "get_next_line.h"
 
 /**
- * clear - Free memory and set pointer to NULL
- * @p: Pointer to the memory pointer to free
- *
- * Frees the memory pointed to by @p and sets it to NULL
- */
-static void	clear(char **p)
-{
-	if (*p != NULL)
-	{
-		free(*p);
-		*p = NULL;
-	}
-}
-
-/**
  * eoljoin - Split buffer at newline or return full buffer
  * @nlptr: Position of the newline character in the buffer
  * @buffer: Pointer to the buffer containing the string
@@ -92,43 +77,61 @@ static char	*rdline(int fd, char **buffer, char *rdreturn)
 		rdbytes = read(fd, rdreturn, BUFFER_SIZE);
 		if (rdbytes == -1)
 		{
-			clear(buffer);
+			free(*buffer);
+			*buffer = NULL;
 			return (NULL);
 		}
 		if (rdbytes == 0)
 			return (eoljoin(rdbytes, buffer));
 		rdreturn[rdbytes] = 0;
 		tmp = gnl_strjoin(*buffer, rdreturn);
-		clear(buffer);
+		free(*buffer);
 		*buffer = tmp;
 		nl = gnl_strchr(*buffer, '\n');
 	}
 	return (eoljoin(nl - *buffer + 1, buffer));
 }
 
-/**
- * get_next_line - Get the next line from a file descriptor
- * @fd: File descriptor to read from
- *
- * Allocates a temporary buffer, reads from @fd using rdline,
- * and returns the next line from the static buffer.
- *
- * Return: Next line as a malloc'ed string, or NULL on EOF/error
- */
+static char	**gnl_buf(void)
+{
+	static char	*buf[1024];
+
+	return (buf);
+}
+
 char	*get_next_line(int fd)
 {
-	static char	*buffer[1024];
-	char		*rdreturn;
-	char		*out;
+	char	**b;
+	char	*rdreturn;
+	char	*out;
 
 	if (fd < 0 || BUFFER_SIZE <= 0 || fd > 1024)
 		return (NULL);
 	rdreturn = malloc(BUFFER_SIZE + 1);
 	if (!rdreturn)
 		return (NULL);
-	if (!buffer[fd])
-		buffer[fd] = gnl_strdup("");
-	out = rdline(fd, &buffer[fd], rdreturn);
-	clear(&rdreturn);
+	b = gnl_buf();
+	if (!b[fd])
+		b[fd] = gnl_strdup("");
+	out = rdline(fd, &b[fd], rdreturn);
+	free(rdreturn);
 	return (out);
+}
+
+void	gnl_cleanup(void)
+{
+	char	**b;
+	int		i;
+
+	b = gnl_buf();
+	i = 0;
+	while (i < 1024)
+	{
+		if (b[i])
+		{
+			free(b[i]);
+			b[i] = NULL;
+		}
+		i++;
+	}
 }

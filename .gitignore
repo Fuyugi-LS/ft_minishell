@@ -1,0 +1,4 @@
+dev
+*.o
+minishell
+AGENT.md

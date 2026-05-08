@@ -20,11 +20,11 @@
  * 
  * Return: A pointer to the initialized arena, or NULL on failure
  */
-t_arena	*arena_init(size_t size)
+t_mem_arena	*arena_init(size_t size)
 {
-	t_arena	*arena;
+	t_mem_arena	*arena;
 
-	arena = malloc(sizeof(t_arena));
+	arena = malloc(sizeof (t_mem_arena));
 	if (!arena)
 	{
 		ft_fprintf(2, "Error: malloc failed\n", NULL);
@@ -44,17 +44,26 @@ t_arena	*arena_init(size_t size)
 	return (arena);
 }
 
-/**
- * arena_alloc - Allocate memory from the arena
- * @arena: Pointer to pointer of the current arena
- * @size: Amount of memory to allocate
- * 
- * Return: Pointer to the allocated memory
- */
-void	*arena_alloc(t_arena **arena, size_t size)
+static void	*grow_arena(t_mem_arena *curr, size_t size)
 {
-	t_arena	*curr;
 	void	*ptr;
+
+	if (4096 > size)
+		curr->next = arena_init(4096);
+	else
+		curr->next = arena_init(size);
+	if (!curr->next)
+		return (NULL);
+	curr = curr->next;
+	ptr = (char *)curr->block + curr->offset;
+	curr->offset += size;
+	return (ptr);
+}
+
+void	*arena_alloc(t_mem_arena **arena, size_t size)
+{
+	t_mem_arena	*curr;
+	void		*ptr;
 
 	if (!arena || !*arena)
 		return (NULL);
@@ -71,22 +80,16 @@ void	*arena_alloc(t_arena **arena, size_t size)
 			break ;
 		curr = curr->next;
 	}
-	curr->next = arena_init(4096 > size ? 4096 : size);
-	if (!curr->next)
-		return (NULL);
-	curr = curr->next;
-	ptr = (char *)curr->block + curr->offset;
-	curr->offset += size;
-	return (ptr);
+	return (grow_arena(curr, size));
 }
 
 /**
  * arena_reset - Reset the arena (pseudo-free)
  * @arena: The arena to reset
  */
-void	arena_reset(t_arena *arena)
+void	arena_reset(t_mem_arena *arena)
 {
-	t_arena	*curr;
+	t_mem_arena	*curr;
 
 	curr = arena;
 	while (curr)
@@ -100,10 +103,10 @@ void	arena_reset(t_arena *arena)
  * arena_destroy - Truly free the arena when shell exits
  * @arena: The arena to destroy
  */
-void	arena_destroy(t_arena *arena)
+void	arena_destroy(t_mem_arena *arena)
 {
-	t_arena	*curr;
-	t_arena	*next;
+	t_mem_arena	*curr;
+	t_mem_arena	*next;
 
 	curr = arena;
 	while (curr)

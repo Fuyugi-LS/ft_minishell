@@ -29,7 +29,7 @@ static int	key_matches(char *entry, char *key)
  *
  * Return: 0
  */
-int	builtin_unset(t_shell *shell, char **args)
+int	builtin_unset(t_shell_data *shell, char **args)
 {
 	int	i;
 	int	j;

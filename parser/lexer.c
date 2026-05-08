@@ -12,113 +12,97 @@
 
 #include "cmd_types.h"
 #include "arena.h"
+#include "parser_utils.h"
 #include "ft_fprintf.h"
 #include "libft.h"
 #include <string.h>
 
-static char	*arena_substr(t_arena **a, char *s, int start, int len)
+static t_lex_token	*lex_op_token(t_mem_arena **arena, char *input, int *ip)
 {
-	char	*res;
+	int	start;
+	int	i;
 
-	res = arena_alloc(a, len + 1);
-	if (!res)
-		return (NULL);
-	ft_memcpy(res, s + start, len);
-	res[len] = '\0';
-	return (res);
+	start = *ip;
+	i = *ip;
+	if (ft_strncmp(input + i, ">>", 2) == 0
+		|| ft_strncmp(input + i, "<<", 2) == 0
+		|| ft_strncmp(input + i, "&&", 2) == 0
+		|| ft_strncmp(input + i, "||", 2) == 0
+		|| ft_strncmp(input + i, "|&", 2) == 0)
+		i += 2;
+	else
+		i += 1;
+	*ip = i;
+	return (new_lex_token(arena,
+			arena_substr(arena, input, start, i - start),
+			get_tok_type(input + start)));
 }
 
-static t_token_type	get_type(char *s)
+static t_lex_token	*lex_word_token(t_mem_arena **arena, char *input, int *ip)
 {
-	if (ft_strncmp(s, ">>", 2) == 0)
-		return (TOK_REDIR_APPEND);
-	if (ft_strncmp(s, "<<", 2) == 0)
-		return (TOK_REDIR_HEREDOC);
-	if (ft_strncmp(s, "&&", 2) == 0)
-		return (TOK_AND);
-	if (ft_strncmp(s, "||", 2) == 0)
-		return (TOK_OR);
-	if (s[0] == '&')
-		return (TOK_AMPERSAND);
-	if (s[0] == '|')
-		return (TOK_PIPE);
-	if (s[0] == '<')
-		return (TOK_REDIR_IN);
-	if (s[0] == '>')
-		return (TOK_REDIR_OUT);
-	if (s[0] == '(')
-		return (TOK_LPAREN);
-	if (s[0] == ')')
-		return (TOK_RPAREN);
-	if (s[0] == ';')
-		return (TOK_SEMICOLON);
-	return (TOK_WORD);
-}
-
-static t_token	*new_token(t_arena **a, char *val, t_token_type type)
-{
-	t_token	*t;
-
-	t = arena_alloc(a, sizeof(t_token));
-	if (!t)
-		return (NULL);
-	t->value = val;
-	t->type = type;
-	t->next = NULL;
-	return (t);
-}
-
-t_token	*tokenize_input(t_arena **arena, char *input)
-{
-	t_token	*head = NULL;
-	t_token	*curr = NULL;
-	int		i = 0;
 	int		start;
+	int		i;
 	char	q;
 
+	start = *ip;
+	i = *ip;
+	q = 0;
+	while (input[i])
+	{
+		if (!q && (input[i] == '\'' || input[i] == '"'))
+			q = input[i];
+		else if (q && input[i] == q)
+			q = 0;
+		else if (!q && (ft_strchr("<>|&();", input[i])
+				|| input[i] == ' '
+				|| (input[i] >= 9 && input[i] <= 13)))
+			break ;
+		i++;
+	}
+	*ip = i;
+	if (q)
+		return (new_lex_token(arena, "quote", TOK_ERROR));
+	return (new_lex_token(arena,
+			arena_substr(arena, input, start, i - start),
+			get_tok_type(input + start)));
+}
+
+static void	append_tok(t_lex_token **head, t_lex_token **curr, t_lex_token *tok)
+{
+	if (!*head)
+	{
+		*head = tok;
+		*curr = *head;
+	}
+	else
+	{
+		(*curr)->next = tok;
+		*curr = (*curr)->next;
+	}
+}
+
+t_lex_token	*tokenize_input(t_mem_arena **arena, char *input)
+{
+	t_lex_token	*head;
+	t_lex_token	*curr;
+	int			i;
+
+	head = NULL;
+	curr = NULL;
+	i = 0;
 	if (!input)
 		return (NULL);
 	while (input[i])
 	{
-		while (input[i] && (input[i] == ' ' || (input[i] >= 9 && input[i] <= 13)))
+		while (input[i] && (input[i] == ' '
+				|| (input[i] >= 9 && input[i] <= 13)))
 			i++;
 		if (!input[i])
 			break ;
-		start = i;
 		if (ft_strchr("<>|&();", input[i]))
-		{
-			if (ft_strncmp(input + i, ">>", 2) == 0 || ft_strncmp(input + i, "<<", 2) == 0
-				|| ft_strncmp(input + i, "&&", 2) == 0 || ft_strncmp(input + i, "||", 2) == 0)
-				i += 2;
-			else
-				i += 1;
-		}
+			append_tok(&head, &curr, lex_op_token(arena, input, &i));
 		else
-		{
-			q = 0;
-			while (input[i])
-			{
-				if (!q && (input[i] == '\'' || input[i] == '"'))
-					q = input[i];
-				else if (q && input[i] == q)
-					q = 0;
-				else if (!q && (ft_strchr("<>|&();", input[i]) || input[i] == ' ' || (input[i] >= 9 && input[i] <= 13)))
-					break ;
-				i++;
-			}
-			if (q)
-				return (new_token(arena, "quote", TOK_ERROR));
-		}
-		if (!head)
-		{
-			head = new_token(arena, arena_substr(arena, input, start, i - start), get_type(input + start));
-			curr = head;
-		}
-		else
-		{
-			curr->next = new_token(arena, arena_substr(arena, input, start, i - start), get_type(input + start));
-			curr = curr->next;
-		}
+			append_tok(&head, &curr, lex_word_token(arena, input, &i));
 	}
 	return (head);
 }

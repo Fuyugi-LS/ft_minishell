@@ -14,48 +14,56 @@
 #include "exe_ctx_utils.h"
 #include "ft_fprintf.h"
 #include "libft.h"
+#include "shell.h"
+#include "builtins.h"
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <errno.h>
 
-/**
- * path_join - Join a dir and a command name with a '/'
- * @dir: The directory string
- * @cmd: The command name
- *
- * Return: A malloc'd joined path or NULL
- */
-static char	*path_join(char *dir, char *cmd)
+void	child_cleanup(t_shell_data *shell);
+
+static char	*search_path_dirs(char *cmd, char **dirs)
 {
 	size_t	dlen;
 	size_t	clen;
-	char	*result;
+	char	*candidate;
+	int		i;
 
-	dlen = ft_strlen(dir);
-	clen = ft_strlen(cmd);
-	result = malloc(dlen + clen + 2);
-	if (!result)
-		return (NULL);
-	ft_memcpy(result, dir, dlen);
-	result[dlen] = '/';
-	ft_memcpy(result + dlen + 1, cmd, clen + 1);
-	return (result);
+	i = -1;
+	while (dirs[++i])
+	{
+		dlen = ft_strlen(dirs[i]);
+		clen = ft_strlen(cmd);
+		candidate = malloc(dlen + clen + 2);
+		if (!candidate)
+			continue ;
+		ft_memcpy(candidate, dirs[i], dlen);
+		candidate[dlen] = '/';
+		ft_memcpy(candidate + dlen + 1, cmd, clen + 1);
+		if (access(candidate, X_OK) == 0)
+		{
+			exe_free_split(dirs);
+			return (candidate);
+		}
+		free(candidate);
+	}
+	exe_free_split(dirs);
+	return (NULL);
 }
 
-/**
- * find_path - Search $PATH for the executable
- * @cmd: Command name
- * @envp: Environment
- *
- * Return: Malloc'd path or NULL if not found
- */
+void	exe_context_free(t_exec_context *context)
+{
+	free(context->pids);
+	context->pids = NULL;
+	free(context->pipes);
+	context->pipes = NULL;
+}
+
 static char	*find_path(char *cmd, char **envp)
 {
 	char	*path_env;
 	char	**dirs;
-	char	*candidate;
-	int		i;
 
 	if (!cmd || !*cmd)
 		return (NULL);
@@ -71,69 +79,61 @@ static char	*find_path(char *cmd, char **envp)
 	dirs = ft_split(path_env, ':');
 	if (!dirs)
 		return (cmd);
-	i = -1;
-	while (dirs[++i])
-	{
-		candidate = path_join(dirs[i], cmd);
-		if (candidate && access(candidate, X_OK) == 0)
-		{
-			exe_free_split(dirs);
-			return (candidate);
-		}
-		free(candidate);
-	}
-	exe_free_split(dirs);
-	return (NULL);
+	return (search_path_dirs(cmd, dirs));
 }
 
-#include "shell.h"
-#include "builtins.h"
-
-void	exe_launch(t_cmd *cmd, t_shell *shell)
+static void	handle_cmd_err(t_shell_data *shell, char *name, int mode)
 {
-	char		*path;
-	char		**envp = shell->envp;
-	void		*err[1];
-	struct stat	st;
+	void	*err[1];
+	int		code;
 
-	if (!cmd->args || !cmd->args[0])
-		exit(0);
-	path = find_path(cmd->args[0], envp);
-	if (!path)
-	{
-		err[0] = cmd->args[0];
-		if (cmd->args[0][0] == '/' || cmd->args[0][0] == '.')
-			ft_fprintf(2, "minishell: %s: No such file or directory\n", err);
-		else
-			ft_fprintf(2, "minishell: %s: command not found\n", err);
-		exit(127);
-	}
-	if (stat(path, &st) == 0 && S_ISDIR(st.st_mode))
-	{
-		err[0] = cmd->args[0];
+	err[0] = name;
+	code = 127;
+	if (mode == -1)
 		ft_fprintf(2, "minishell: %s: Is a directory\n", err);
-		exit(126);
-	}
-	{
-		char *env_arg = ft_strjoin("_=", path);
-		if (env_arg)
-		{
-			update_env(shell, env_arg);
-			free(env_arg);
-		}
-	}
-	execve(path, cmd->args, shell->envp);
-	err[0] = cmd->args[0];
-	if (errno == EACCES)
+	else if (mode == 0 && (name[0] == '/' || name[0] == '.'))
+		ft_fprintf(2, "minishell: %s: No such file or directory\n", err);
+	else if (mode == 0)
+		ft_fprintf(2, "minishell: %s: command not found\n", err);
+	else if (errno == EACCES)
 	{
 		ft_fprintf(2, "minishell: %s: Permission denied\n", err);
-		exit(126);
+		code = 126;
 	}
-	if (errno == ENOENT)
-	{
+	else if (errno == ENOENT)
 		ft_fprintf(2, "minishell: %s: No such file or directory\n", err);
-		exit(127);
+	else
+		ft_fprintf(2, "minishell: %s: command not found\n", err);
+	if (mode == -1)
+		code = 126;
+	child_cleanup(shell);
+	exit(code);
+}
+
+void	exe_launch(t_command *cmd, t_shell_data *shell)
+{
+	char		*path;
+	char		**envp;
+	struct stat	st;
+	char		*env_arg;
+
+	envp = shell->envp;
+	if (!cmd->args || !cmd->args[0])
+	{
+		child_cleanup(shell);
+		exit(0);
 	}
-	ft_fprintf(2, "minishell: %s: command not found\n", err);
-	exit(127);
+	path = find_path(cmd->args[0], envp);
+	if (!path)
+		handle_cmd_err(shell, cmd->args[0], 0);
+	if (stat(path, &st) == 0 && S_ISDIR(st.st_mode))
+		handle_cmd_err(shell, cmd->args[0], -1);
+	env_arg = ft_strjoin("_=", path);
+	if (env_arg)
+	{
+		update_env(shell, env_arg);
+		free(env_arg);
+	}
+	execve(path, cmd->args, shell->envp);
+	handle_cmd_err(shell, cmd->args[0], 1);
 }

@@ -21,7 +21,7 @@
  *
  * Return: 0
  */
-int	builtin_env(t_shell *shell)
+int	builtin_env(t_shell_data *shell)
 {
 	int		i;
 	void	*a[1];

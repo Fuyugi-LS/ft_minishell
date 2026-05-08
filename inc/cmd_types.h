@@ -13,7 +13,7 @@
 #ifndef CMD_TYPES_H
 # define CMD_TYPES_H
 
-typedef enum e_token_type
+typedef enum e_tok_type
 {
 	TOK_WORD,
 	TOK_PIPE,
@@ -29,37 +29,37 @@ typedef enum e_token_type
 	TOK_SEMICOLON,
 	TOK_EOF,
 	TOK_ERROR
-}	t_token_type;
+}	t_tok_type;
 
-typedef struct s_token
+typedef struct s_lex_token
 {
-	t_token_type	type;
-	char			*value;
-	struct s_token	*next;
-}	t_token;
+	t_tok_type			type;
+	char				*value;
+	struct s_lex_token	*next;
+}	t_lex_token;
 
-typedef enum e_redir_type
+typedef enum e_redir_kind
 {
 	REDIR_IN,
 	REDIR_OUT,
 	REDIR_APPEND,
 	REDIR_HEREDOC
-}	t_redir_type;
+}	t_redir_kind;
 
-typedef struct s_redir
+typedef struct s_redirect
 {
-	t_redir_type	type;
-	char			*file;
-	struct s_redir	*next;
-}	t_redir;
+	t_redir_kind		type;
+	char				*file;
+	struct s_redirect	*next;
+}	t_redirect;
 
-typedef struct s_cmd
+typedef struct s_command
 {
-	char	**args;
-	t_redir	*redirs;
-}	t_cmd;
+	char		**args;
+	t_redirect	*redirs;
+}	t_command;
 
-typedef enum e_node_type
+typedef enum e_node_kind
 {
 	NODE_COMMAND,
 	NODE_PIPE,
@@ -67,16 +67,16 @@ typedef enum e_node_type
 	NODE_OR,
 	NODE_SUBSHELL,
 	NODE_SEQ
-}	t_node_type;
+}	t_node_kind;
 
-typedef struct s_node
+typedef struct s_ast_node
 {
-	t_node_type		type;
-	struct s_node	*left;
-	struct s_node	*right;
-	t_cmd			*cmds;
-	t_redir			*redirs;
-	int				count;
-}	t_node;
+	t_node_kind			type;
+	struct s_ast_node	*left;
+	struct s_ast_node	*right;
+	t_command			*cmds;
+	t_redirect			*redirs;
+	int					count;
+}	t_ast_node;
 
 #endif

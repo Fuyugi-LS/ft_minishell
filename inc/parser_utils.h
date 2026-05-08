@@ -16,6 +16,9 @@
 # include "cmd_types.h"
 # include "arena_struct.h"
 
-t_cmd	*cmd_table_new(t_arena **arena, int count);
+t_command		*cmd_table_new(t_mem_arena **arena, int count);
+char			*arena_substr(t_mem_arena **a, char *s, int start, int len);
+t_tok_type		get_tok_type(char *s);
+t_lex_token		*new_lex_token(t_mem_arena **a, char *val, t_tok_type type);
 
 #endif

@@ -18,149 +18,94 @@
 #include "libft.h"
 #include "ft_fprintf.h"
 
-char	*finalize_word(char *s)
+int	parse_redirection(t_shell_data *shell, t_redirect **redirs, t_lex_token **t)
 {
-	int	i;
-
-	if (!s)
-		return (NULL);
-	i = -1;
-	while (s[++i])
-	{
-		if (s[i] == 1)
-			s[i] = '*';
-	}
-	return (s);
-}
-
-int	has_wildcard(char *s)
-{
-	if (!s)
-		return (0);
-	while (*s)
-	{
-		if (*s == 1)
-			return (1);
-		s++;
-	}
-	return (0);
-}
-
-
-static void	add_redir_node(t_shell *shell, t_redir **list, t_redir_type type, char *file)
-{
-	t_redir	*new;
-	t_redir	*last;
-
-	new = arena_alloc(&shell->arena, sizeof(t_redir));
-	if (!new)
-		return ;
-	new->type = type;
-	new->file = file;
-	new->next = NULL;
-	if (!*list)
-		*list = new;
-	else
-	{
-		last = *list;
-		while (last->next)
-			last = last->next;
-		last->next = new;
-	}
-}
-
-int	parse_redirection(t_shell *shell, t_redir **redirs, t_token **t)
-{
-	char	*val;
-	void	*a[1];
-	t_token	*cur;
+	void		*a[1];
+	t_lex_token	*cur;
 
 	cur = *t;
 	if (!cur->next || cur->next->type != TOK_WORD)
 	{
-		a[0] = (cur->next ? cur->next->value : "newline");
-		ft_fprintf(2, "minishell: syntax error near unexpected token `%s'\n", a);
+		a[0] = "newline";
+		if (cur->next)
+			a[0] = cur->next->value;
+		ft_fprintf(2,
+			"minishell: syntax error near unexpected token `%s'\n", a);
 		shell->last_exit = 2;
 		shell->error_printed = 1;
 		return (1);
 	}
-	val = cur->next->value;
 	if (cur->type == TOK_REDIR_IN)
-		add_redir_node(shell, redirs, REDIR_IN, val);
+		add_redir_node(shell, redirs, REDIR_IN, cur->next->value);
 	else if (cur->type == TOK_REDIR_OUT)
-		add_redir_node(shell, redirs, REDIR_OUT, val);
+		add_redir_node(shell, redirs, REDIR_OUT, cur->next->value);
 	else if (cur->type == TOK_REDIR_APPEND)
-		add_redir_node(shell, redirs, REDIR_APPEND, val);
+		add_redir_node(shell, redirs, REDIR_APPEND, cur->next->value);
 	else if (cur->type == TOK_REDIR_HEREDOC)
-		add_redir_node(shell, redirs, REDIR_HEREDOC, val);
+		add_redir_node(shell, redirs, REDIR_HEREDOC, cur->next->value);
 	*t = cur->next->next;
 	return (0);
 }
 
-static int	fill_cmd(t_shell *shell, t_cmd *cmd, t_token **tok)
+static int	fill_tok(t_shell_data *shell, t_command *cmd,
+				t_lex_token **tp, int *wi)
 {
-	int		wi;
-	t_token	*t;
+	t_lex_token	*t;
+
+	t = *tp;
+	if (t->type == TOK_WORD)
+		cmd->args[(*wi)++] = t->value;
+	else if (is_redir_tok(t))
+	{
+		if (parse_redirection(shell, &cmd->redirs, &t))
+			return (-1);
+		*tp = t;
+		return (1);
+	}
+	else if (t->type == TOK_ERROR)
+	{
+		shell->last_exit = 2;
+		return (-1);
+	}
+	return (0);
+}
+
+static int	fill_cmd(t_shell_data *shell, t_command *cmd, t_lex_token **tok)
+{
+	int			wi;
+	t_lex_token	*t;
+	int			r;
 
 	t = *tok;
 	wi = 0;
-	cmd->args = arena_alloc(&shell->arena, sizeof(char *) * 1024);
+	cmd->args = arena_alloc(&shell->arena, sizeof (char *) * 1024);
 	if (!cmd->args)
 		return (1);
-	ft_memset(cmd->args, 0, sizeof(char *) * 1024);
-	while (t && t->type != TOK_PIPE && t->type != TOK_AND && t->type != TOK_OR 
-		&& t->type != TOK_LPAREN && t->type != TOK_RPAREN && t->type != TOK_SEMICOLON)
+	ft_memset(cmd->args, 0, sizeof (char *) * 1024);
+	while (t && t->type != TOK_PIPE && t->type != TOK_AND
+		&& t->type != TOK_OR && t->type != TOK_LPAREN
+		&& t->type != TOK_RPAREN && t->type != TOK_SEMICOLON)
 	{
-		if (t->type == TOK_WORD)
-			cmd->args[wi++] = t->value;
-		else if (t->type == TOK_REDIR_IN || t->type == TOK_REDIR_OUT 
-			|| t->type == TOK_REDIR_APPEND || t->type == TOK_REDIR_HEREDOC)
-		{
-			if (parse_redirection(shell, &cmd->redirs, &t))
-				return (1);
-			continue ;
-		}
-		else if (t->type == TOK_ERROR)
-		{
-			shell->last_exit = 2;
+		r = fill_tok(shell, cmd, &t, &wi);
+		if (r == -1)
 			return (1);
-		}
-		t = t->next;
+		if (r == 0)
+			t = t->next;
 	}
 	cmd->args[wi] = NULL;
 	*tok = t;
 	return (0);
 }
 
-/**
- * parse_tokens - Build a single t_cmd from token list
- * @shell: Shell context
- * @tokens: Token list from lexer
- * @cmd_count: Output: 1 on success
- *
- * Return: Flat t_cmd array (size 1) or NULL
- */
-t_cmd	*parse_tokens(t_shell *shell, t_token **tokens, int *cmd_count)
+static t_command	*alloc_cmd_table(t_shell_data *shell, t_lex_token **tokens)
 {
-	t_cmd	*table;
-	t_token	*cur;
+	t_command	*table;
+	t_lex_token	*cur;
 
-	if (!*tokens || !tokens)
-	{
-		*cmd_count = 0;
-		return (NULL);
-	}
-	if ((*tokens)->type == TOK_PIPE || (*tokens)->type == TOK_AND || (*tokens)->type == TOK_OR 
-		|| (*tokens)->type == TOK_AMPERSAND || (*tokens)->type == TOK_ERROR || (*tokens)->type == TOK_SEMICOLON)
-	{
-		shell->last_exit = 2;
-		return (NULL);
-	}
-	*cmd_count = 1;
-	table = arena_alloc(&shell->arena, sizeof(t_cmd));
+	table = arena_alloc(&shell->arena, sizeof (t_command));
 	if (!table)
 		return (NULL);
-	ft_memset(table, 0, sizeof(t_cmd));
+	ft_memset(table, 0, sizeof (t_command));
 	cur = *tokens;
 	if (fill_cmd(shell, table, &cur))
 	{
@@ -169,4 +114,23 @@ t_cmd	*parse_tokens(t_shell *shell, t_token **tokens, int *cmd_count)
 	}
 	*tokens = cur;
 	return (table);
+}
+
+t_command	*parse_tokens(t_shell_data *shell, t_lex_token **tokens,
+				int *cmd_count)
+{
+	*cmd_count = 0;
+	if (!tokens || !*tokens)
+		return (NULL);
+	if ((*tokens)->type == TOK_PIPE || (*tokens)->type == TOK_AND
+		|| (*tokens)->type == TOK_OR
+		|| (*tokens)->type == TOK_AMPERSAND
+		|| (*tokens)->type == TOK_ERROR
+		|| (*tokens)->type == TOK_SEMICOLON)
+	{
+		shell->last_exit = 2;
+		return (NULL);
+	}
+	*cmd_count = 1;
+	return (alloc_cmd_table(shell, tokens));
 }

@@ -13,29 +13,28 @@
 #include "shell.h"
 #include "parser.h"
 #include "arena.h"
-
 #include "ft_fprintf.h"
 #include "libft.h"
 
-static t_node	*parse_primary(t_shell *shell, t_token **tokens);
-static t_node	*parse_pipeline(t_shell *shell, t_token **tokens);
-static t_node	*parse_logical(t_shell *shell, t_token **tokens);
+static t_ast_node	*parse_primary(t_shell_data *shell, t_lex_token **tokens);
+static t_ast_node	*parse_pipeline(t_shell_data *shell, t_lex_token **tokens);
+static t_ast_node	*parse_logical(t_shell_data *shell, t_lex_token **tokens);
 
-static t_node	*new_node(t_arena **a, t_node_type type)
+static t_ast_node	*new_node(t_mem_arena **a, t_node_kind type)
 {
-	t_node	*n;
+	t_ast_node	*n;
 
-	n = arena_alloc(a, sizeof(t_node));
+	n = arena_alloc(a, sizeof (t_ast_node));
 	if (!n)
 		return (NULL);
-	ft_memset(n, 0, sizeof(t_node));
+	ft_memset(n, 0, sizeof (t_ast_node));
 	n->type = type;
 	return (n);
 }
 
-static t_node	*parse_primary(t_shell *shell, t_token **tokens)
+static t_ast_node	*parse_primary(t_shell_data *shell, t_lex_token **tokens)
 {
-	t_node	*node;
+	t_ast_node	*node;
 
 	if (!tokens || !*tokens)
 		return (NULL);
@@ -50,8 +49,7 @@ static t_node	*parse_primary(t_shell *shell, t_token **tokens)
 			return (NULL);
 		}
 		*tokens = (*tokens)->next;
-		while (*tokens && ((*tokens)->type == TOK_REDIR_IN || (*tokens)->type == TOK_REDIR_OUT 
-			|| (*tokens)->type == TOK_REDIR_APPEND || (*tokens)->type == TOK_REDIR_HEREDOC))
+		while (is_redir_tok(*tokens))
 		{
 			if (parse_redirection(shell, &node->redirs, tokens))
 				return (NULL);
@@ -60,18 +58,16 @@ static t_node	*parse_primary(t_shell *shell, t_token **tokens)
 	}
 	node = new_node(&shell->arena, NODE_COMMAND);
 	node->cmds = parse_tokens(shell, tokens, &node->count);
-	if (!node->cmds)
-		return (NULL);
 	return (node);
 }
 
-static t_node	*parse_pipeline(t_shell *shell, t_token **tokens)
+static t_ast_node	*parse_pipeline(t_shell_data *shell, t_lex_token **tokens)
 {
-	t_node	*node;
-	t_node	*tmp;
+	t_ast_node	*node;
+	t_ast_node	*tmp;
 
 	node = parse_primary(shell, tokens);
-	if (!node)
+	if (!node || (node->type == NODE_COMMAND && !node->count))
 		return (NULL);
 	while (*tokens && (*tokens)->type == TOK_PIPE)
 	{
@@ -89,17 +85,21 @@ static t_node	*parse_pipeline(t_shell *shell, t_token **tokens)
 	return (node);
 }
 
-static t_node	*parse_logical(t_shell *shell, t_token **tokens)
+static t_ast_node	*parse_logical(t_shell_data *shell, t_lex_token **tokens)
 {
-	t_node	*node;
-	t_node	*tmp;
+	t_ast_node	*node;
+	t_ast_node	*tmp;
 
 	node = parse_pipeline(shell, tokens);
 	if (!node)
 		return (NULL);
-	while (*tokens && ((*tokens)->type == TOK_AND || (*tokens)->type == TOK_OR))
+	while (*tokens && ((*tokens)->type == TOK_AND
+			|| (*tokens)->type == TOK_OR))
 	{
-		tmp = new_node(&shell->arena, ((*tokens)->type == TOK_AND ? NODE_AND : NODE_OR));
+		if ((*tokens)->type == TOK_AND)
+			tmp = new_node(&shell->arena, NODE_AND);
+		else
+			tmp = new_node(&shell->arena, NODE_OR);
 		tmp->left = node;
 		*tokens = (*tokens)->next;
 		tmp->right = parse_logical(shell, tokens);
@@ -113,10 +113,10 @@ static t_node	*parse_logical(t_shell *shell, t_token **tokens)
 	return (node);
 }
 
-static t_node	*parse_sequence(t_shell *shell, t_token **tokens)
+t_ast_node	*parse_ast(t_shell_data *shell, t_lex_token **tokens)
 {
-	t_node	*node;
-	t_node	*tmp;
+	t_ast_node	*node;
+	t_ast_node	*tmp;
 
 	node = parse_logical(shell, tokens);
 	if (!node)
@@ -128,18 +128,10 @@ static t_node	*parse_sequence(t_shell *shell, t_token **tokens)
 			return (node);
 		tmp = new_node(&shell->arena, NODE_SEQ);
 		tmp->left = node;
-		tmp->right = parse_sequence(shell, tokens);
+		tmp->right = parse_ast(shell, tokens);
 		if (!tmp->right)
-		{
-			/* Trailing semicolon is fine in many shells, but let's be careful */
 			return (node);
-		}
 		node = tmp;
 	}
 	return (node);
-}
-
-t_node	*parse_ast(t_shell *shell, t_token **tokens)
-{
-	return (parse_sequence(shell, tokens));
 }

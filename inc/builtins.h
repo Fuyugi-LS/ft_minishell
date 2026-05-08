@@ -16,14 +16,14 @@
 # include "shell.h"
 
 int		builtin_echo(char **args);
-int		builtin_pwd(t_shell *shell);
-int		builtin_cd(t_shell *shell, char **args);
-int		builtin_env(t_shell *shell);
-int		builtin_export(t_shell *shell, char **args);
-void	update_env(t_shell *shell, char *arg);
-void	init_env(t_shell *shell, char **envp);
-void	free_env(t_shell *shell);
-int		builtin_unset(t_shell *shell, char **args);
-void	builtin_exit(t_shell *shell, char **args);
+int		builtin_pwd(t_shell_data *shell);
+int		builtin_cd(t_shell_data *shell, char **args);
+int		builtin_env(t_shell_data *shell);
+int		builtin_export(t_shell_data *shell, char **args);
+void	update_env(t_shell_data *shell, char *arg);
+void	init_env(t_shell_data *shell, char **envp);
+void	free_env(t_shell_data *shell);
+int		builtin_unset(t_shell_data *shell, char **args);
+void	builtin_exit(t_shell_data *shell, char **args);
 
 #endif

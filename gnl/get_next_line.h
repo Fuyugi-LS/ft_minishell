@@ -26,4 +26,5 @@ char	*gnl_strchr(const char *str, int n);
 size_t	gnl_strlen(const char *str);
 char	*gnl_strdup(const char *str);
 char	*gnl_substr(char const *s, unsigned int start, size_t len);
+void	gnl_cleanup(void);
 #endif

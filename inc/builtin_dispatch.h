@@ -16,6 +16,6 @@
 # include "shell.h"
 
 int		is_builtin(char *name);
-int		run_builtin(t_shell *shell, char **args);
+int		run_builtin(t_shell_data *shell, char **args);
 
 #endif

@@ -16,6 +16,6 @@
 # include "cmd_types.h"
 # include "shell.h"
 
-void	exe_launch(t_cmd *cmd, t_shell *shell);
+void	exe_launch(t_command *cmd, t_shell_data *shell);
 
 #endif

@@ -17,13 +17,13 @@
 # include "shell.h"
 # include <sys/types.h>
 
-typedef struct s_exec_ctx
+typedef struct s_exec_context
 {
-	t_cmd		*cmds;
-	int			count;
-	t_shell		*shell;
-	pid_t		*pids;
-	int			(*pipes)[2];
-}	t_exec_ctx;
+	t_command		*cmds;
+	int				count;
+	t_shell_data	*shell;
+	pid_t			*pids;
+	int				(*pipes)[2];
+}	t_exec_context;
 
 #endif

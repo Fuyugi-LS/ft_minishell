@@ -36,12 +36,25 @@ static int	check_n_flag(char *arg)
 	return (i > 1);
 }
 
-/**
- * builtin_echo - Emulate bash echo
- * @args: Null-terminated array of arguments (args[0] == "echo")
- *
- * Return: 0 always
- */
+static int	build_echo_buf(char **args, int i, char *buf, int newline)
+{
+	int	pos;
+
+	pos = 0;
+	ft_memset(buf, 0, 4096);
+	while (args[i])
+	{
+		ft_strlcpy(buf + pos, args[i], 4096 - pos);
+		pos += ft_strlen(args[i]);
+		if (args[i + 1] && pos < 4095)
+			buf[pos++] = ' ';
+		i++;
+	}
+	if (newline && pos < 4095)
+		buf[pos++] = '\n';
+	return (pos);
+}
+
 int	builtin_echo(char **args)
 {
 	int		i;
@@ -56,18 +69,7 @@ int	builtin_echo(char **args)
 		newline = 0;
 		i++;
 	}
-	pos = 0;
-	ft_memset(buf, 0, sizeof(buf));
-	while (args[i])
-	{
-		ft_strlcpy(buf + pos, args[i], sizeof(buf) - pos);
-		pos += ft_strlen(args[i]);
-		if (args[i + 1] && pos < (int)sizeof(buf) - 1)
-			buf[pos++] = ' ';
-		i++;
-	}
-	if (newline && pos < (int)sizeof(buf) - 1)
-		buf[pos++] = '\n';
+	pos = build_echo_buf(args, i, buf, newline);
 	write(1, buf, pos);
 	return (0);
 }

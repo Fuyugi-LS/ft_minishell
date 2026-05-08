@@ -13,7 +13,39 @@
 #include "shell.h"
 #include "ft_fprintf.h"
 #include "libft.h"
+#include "get_next_line.h"
+#include "builtins.h"
 #include <stdlib.h>
+
+static int	atoll_check_overflow(unsigned long long n, int sign, char c)
+{
+	if (n > 922337203685477580ULL)
+		return (1);
+	if (sign == 1 && n == 922337203685477580ULL && (c - '0') > 7)
+		return (1);
+	if (sign == -1 && n == 922337203685477580ULL && (c - '0') > 8)
+		return (1);
+	return (0);
+}
+
+static int	atoll_parse_digits(const char *str, int *ip,
+		unsigned long long *np, int sign)
+{
+	if (!str[*ip])
+		return (1);
+	while (str[*ip] >= '0' && str[*ip] <= '9')
+	{
+		if (atoll_check_overflow(*np, sign, str[*ip]))
+			return (1);
+		*np = *np * 10 + (str[*ip] - '0');
+		(*ip)++;
+	}
+	while (str[*ip] == ' ' || (str[*ip] >= 9 && str[*ip] <= 13))
+		(*ip)++;
+	if (str[*ip])
+		return (1);
+	return (0);
+}
 
 static int	atoll_check(const char *str, long long *res)
 {
@@ -32,26 +64,21 @@ static int	atoll_check(const char *str, long long *res)
 			sign = -1;
 		i++;
 	}
-	if (!str[i])
+	if (atoll_parse_digits(str, &i, &n, sign))
 		return (1);
-	while (str[i] >= '0' && str[i] <= '9')
-	{
-		if (sign == 1 && (n > 922337203685477580ULL || (n == 922337203685477580ULL && (str[i] - '0') > 7)))
-			return (1);
-		if (sign == -1 && (n > 922337203685477580ULL || (n == 922337203685477580ULL && (str[i] - '0') > 8)))
-			return (1);
-		n = n * 10 + (str[i] - '0');
-		i++;
-	}
-	while (str[i] == ' ' || (str[i] >= 9 && str[i] <= 13))
-		i++;
-	if (str[i])
-		return (1);
-	*res = n * sign;
+	*res = (long long)n * sign;
 	return (0);
 }
 
-void	builtin_exit(t_shell *shell, char **args)
+static void	cleanup_and_exit(t_shell_data *shell, int code)
+{
+	free_env(shell);
+	gnl_cleanup();
+	arena_destroy(shell->arena);
+	exit(code & 0xFF);
+}
+
+void	builtin_exit(t_shell_data *shell, char **args)
 {
 	long long	code;
 	int			argc;
@@ -62,17 +89,13 @@ void	builtin_exit(t_shell *shell, char **args)
 	if (isatty(STDIN_FILENO))
 		write(1, "exit\n", 5);
 	if (argc == 1)
-	{
-		arena_destroy(shell->arena);
-		exit(shell->last_exit & 0xFF);
-	}
+		cleanup_and_exit(shell, shell->last_exit);
 	if (atoll_check(args[1], &code))
 	{
 		write(2, "minishell: exit: ", 17);
 		write(2, args[1], ft_strlen(args[1]));
 		write(2, ": numeric argument required\n", 28);
-		arena_destroy(shell->arena);
-		exit(2);
+		cleanup_and_exit(shell, 2);
 	}
 	if (argc > 2)
 	{
@@ -80,6 +103,5 @@ void	builtin_exit(t_shell *shell, char **args)
 		shell->last_exit = 1;
 		return ;
 	}
-	arena_destroy(shell->arena);
-	exit(code & 0xFF);
+	cleanup_and_exit(shell, code);
 }

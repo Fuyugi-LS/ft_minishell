@@ -15,7 +15,6 @@
 #include "libft.h"
 #include <dirent.h>
 
-/* Using \x01 as internal wildcard marker */
 #define WILD 1
 
 static int	match(char *pat, char *str)
@@ -41,20 +40,6 @@ static int	match(char *pat, char *str)
 	return (0);
 }
 
-static int	ft_strcmp_unsigned(const char *s1, const char *s2)
-{
-	size_t			i;
-	unsigned char	*u1;
-	unsigned char	*u2;
-
-	u1 = (unsigned char *)s1;
-	u2 = (unsigned char *)s2;
-	i = 0;
-	while (u1[i] && u2[i] && u1[i] == u2[i])
-		i++;
-	return (u1[i] - u2[i]);
-}
-
 static void	sort_args(char **arr, int n)
 {
 	int		i;
@@ -67,7 +52,7 @@ static void	sort_args(char **arr, int n)
 		j = i;
 		while (++j < n)
 		{
-			if (ft_strcmp_unsigned(arr[i], arr[j]) > 0)
+			if (ft_strncmp(arr[i], arr[j], 4096) > 0)
 			{
 				tmp = arr[i];
 				arr[i] = arr[j];
@@ -77,12 +62,12 @@ static void	sort_args(char **arr, int n)
 	}
 }
 
-static char	*finalize_pattern(t_arena **a, char *pat)
+static char	*finalize_pattern(t_mem_arena **ar, char *pat)
 {
 	int		i;
 	char	*res;
 
-	res = arena_alloc(a, ft_strlen(pat) + 1);
+	res = arena_alloc(ar, ft_strlen(pat) + 1);
 	if (!res)
 		return (NULL);
 	i = -1;
@@ -97,33 +82,41 @@ static char	*finalize_pattern(t_arena **a, char *pat)
 	return (res);
 }
 
-void	expand_wildcard(t_shell *shell, char *pat, char ***args, int *wi)
+static int	scan_dir(t_shell_data *shell, char *pat, char ***args, int *wi)
 {
 	DIR				*d;
 	struct dirent	*dir;
-	int				start_wi;
+	size_t			len;
 	int				found;
 
-	start_wi = *wi;
 	found = 0;
 	d = opendir(".");
 	if (!d)
+		return (0);
+	dir = readdir(d);
+	while (dir)
 	{
-		(*args)[(*wi)++] = finalize_pattern(&shell->arena, pat);
-		return ;
-	}
-	while ((dir = readdir(d)))
-	{
-		if (dir->d_name[0] == '.' && pat[0] != '.')
-			continue ;
-		if (match(pat, dir->d_name))
+		if (!(dir->d_name[0] == '.' && pat[0] != '.') && match(pat,
+				dir->d_name))
 		{
-			(*args)[(*wi)++] = arena_alloc(&shell->arena, ft_strlen(dir->d_name) + 1);
-			ft_memcpy((*args)[*wi - 1], dir->d_name, ft_strlen(dir->d_name) + 1);
+			len = ft_strlen(dir->d_name) + 1;
+			(*args)[(*wi)++] = arena_alloc(&shell->arena, len);
+			ft_memcpy((*args)[*wi - 1], dir->d_name, len);
 			found = 1;
 		}
+		dir = readdir(d);
 	}
 	closedir(d);
+	return (found);
+}
+
+void	expand_wildcard(t_shell_data *shell, char *pat, char ***args, int *wi)
+{
+	int	start_wi;
+	int	found;
+
+	start_wi = *wi;
+	found = scan_dir(shell, pat, args, wi);
 	if (!found)
 		(*args)[(*wi)++] = finalize_pattern(&shell->arena, pat);
 	else

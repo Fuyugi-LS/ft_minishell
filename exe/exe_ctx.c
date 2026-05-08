@@ -41,60 +41,46 @@ char	*shell_get_env(char **envp, char *key)
 	return (NULL);
 }
 
-/**
- * exe_ctx_init - Open all N-1 pipes and malloc pids array
- * @ctx: Context pre-filled with cmds, count, envp
- *
- * Return: 0 on success, 1 on failure
- */
-int	exe_ctx_init(t_exec_ctx *ctx)
+static int	open_pipes(t_exec_context *context)
 {
 	int	i;
 
-	ctx->pids = malloc(sizeof(pid_t) * ctx->count);
-	if (!ctx->pids)
+	context->pipes = malloc(sizeof (int) * 2 * (context->count - 1));
+	if (!context->pipes)
 	{
 		ft_fprintf(2, "minishell: malloc failed\n", NULL);
+		free(context->pids);
+		context->pids = NULL;
 		return (1);
 	}
-	ctx->pipes = NULL;
-	if (ctx->count > 1)
+	i = -1;
+	while (++i < context->count - 1)
 	{
-		ctx->pipes = malloc(sizeof(int[2]) * (ctx->count - 1));
-		if (!ctx->pipes)
+		if (pipe(context->pipes[i]) == -1)
 		{
-			ft_fprintf(2, "minishell: malloc failed\n", NULL);
-			free(ctx->pids);
-			ctx->pids = NULL;
+			ft_fprintf(2, "minishell: pipe failed\n", NULL);
+			free(context->pids);
+			context->pids = NULL;
+			free(context->pipes);
+			context->pipes = NULL;
 			return (1);
-		}
-		i = -1;
-		while (++i < ctx->count - 1)
-		{
-			if (pipe(ctx->pipes[i]) == -1)
-			{
-				ft_fprintf(2, "minishell: pipe failed\n", NULL);
-				free(ctx->pids);
-				ctx->pids = NULL;
-				free(ctx->pipes);
-				ctx->pipes = NULL;
-				return (1);
-			}
 		}
 	}
 	return (0);
 }
 
-/**
- * exe_ctx_free - Free all ctx resources after waitpid
- * @ctx: Context to free
- */
-void	exe_ctx_free(t_exec_ctx *ctx)
+int	exe_context_init(t_exec_context *context)
 {
-	free(ctx->pids);
-	ctx->pids = NULL;
-	free(ctx->pipes);
-	ctx->pipes = NULL;
+	context->pids = malloc(sizeof (pid_t) * context->count);
+	if (!context->pids)
+	{
+		ft_fprintf(2, "minishell: malloc failed\n", NULL);
+		return (1);
+	}
+	context->pipes = NULL;
+	if (context->count > 1)
+		return (open_pipes(context));
+	return (0);
 }
 
 /**

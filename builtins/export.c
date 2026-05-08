@@ -17,65 +17,7 @@
 #include <unistd.h>
 #include "exe_ctx_utils.h"
 
-static void	sort_env(char **env, int len)
-{
-	int		i;
-	int		j;
-	char	*tmp;
-
-	i = -1;
-	while (++i < len - 1)
-	{
-		j = i;
-		while (++j < len)
-		{
-			if (ft_strncmp(env[i], env[j], 1024) > 0)
-			{
-				tmp = env[i];
-				env[i] = env[j];
-				env[j] = tmp;
-			}
-		}
-	}
-}
-
-static void	print_exported(char **envp)
-{
-	int		len;
-	char	**sorted;
-	int		i;
-	char	*eq;
-
-	len = 0;
-	while (envp[len])
-		len++;
-	sorted = malloc(sizeof(char *) * (len + 1));
-	i = -1;
-	while (++i < len)
-		sorted[i] = envp[i];
-	sorted[len] = NULL;
-	sort_env(sorted, len);
-	i = -1;
-	while (sorted[++i])
-	{
-		eq = ft_strchr(sorted[i], '=');
-		if (eq)
-		{
-			write(1, "declare -x ", 11);
-			write(1, sorted[i], eq - sorted[i]);
-			write(1, "=\"", 2);
-			write(1, eq + 1, ft_strlen(eq + 1));
-			write(1, "\"\n", 2);
-		}
-		else
-		{
-			write(1, "declare -x ", 11);
-			write(1, sorted[i], ft_strlen(sorted[i]));
-			write(1, "\n", 1);
-		}
-	}
-	free(sorted);
-}
+void	print_exported(char **envp);
 
 static int	is_valid_id(char *s)
 {
@@ -93,41 +35,18 @@ static int	is_valid_id(char *s)
 	return (1);
 }
 
-void	update_env(t_shell *shell, char *arg)
+static void	append_env(t_shell_data *shell, char *arg)
 {
-	int		i;
-	int		j;
-	int		len;
-	char	*name;
-	char	*eq;
 	char	**new_envp;
+	int		len;
+	int		i;
 
-	eq = ft_strchr(arg, '=');
-	if (eq)
-		name = ft_substr(arg, 0, eq - arg);
-	else
-		name = ft_strdup(arg);
-	i = 0;
-	while (shell->envp[i])
-	{
-		if (ft_strncmp(shell->envp[i], name, ft_strlen(name)) == 0
-			&& (shell->envp[i][ft_strlen(name)] == '=' || !shell->envp[i][ft_strlen(name)]))
-		{
-			free(shell->envp[i]);
-			j = i;
-			while (shell->envp[j])
-			{
-				shell->envp[j] = shell->envp[j + 1];
-				j++;
-			}
-		}
-		else
-			i++;
-	}
 	len = 0;
 	while (shell->envp[len])
 		len++;
-	new_envp = malloc(sizeof(char *) * (len + 2));
+	new_envp = malloc(sizeof (char *) * (len + 2));
+	if (!new_envp)
+		return ;
 	i = -1;
 	while (++i < len)
 		new_envp[i] = shell->envp[i];
@@ -135,64 +54,38 @@ void	update_env(t_shell *shell, char *arg)
 	new_envp[len + 1] = NULL;
 	free(shell->envp);
 	shell->envp = new_envp;
-	free(name);
 }
 
-void	free_env(t_shell *shell)
+void	update_env(t_shell_data *shell, char *arg)
 {
-	int	i;
-
-	if (!shell->envp)
-		return ;
-	i = 0;
-	while (shell->envp[i])
-	{
-		free(shell->envp[i]);
-		i++;
-	}
-	free(shell->envp);
-	shell->envp = NULL;
-}
-
-void	init_env(t_shell *shell, char **envp)
-{
-	int		len;
+	char	*eq;
+	char	*name;
+	int		nlen;
 	int		i;
-	char	*shlvl;
-	char	*new_lvl;
-	char	cwd[1024];
 
-	len = 0;
-	while (envp[len])
-		len++;
-	shell->envp = malloc(sizeof(char *) * (len + 1));
-	i = -1;
-	while (++i < len)
-		shell->envp[i] = ft_strdup(envp[i]);
-	shell->envp[len] = NULL;
-	shlvl = shell_get_env(shell->envp, "SHLVL");
-	if (shlvl)
-	{
-		char *itoa_res = ft_itoa(ft_atoi(shlvl) + 1);
-		new_lvl = ft_strjoin("SHLVL=", itoa_res);
-		update_env(shell, new_lvl);
-		free(new_lvl);
-		free(itoa_res);
-	}
+	eq = ft_strchr(arg, '=');
+	if (eq)
+		name = ft_substr(arg, 0, eq - arg);
 	else
-		update_env(shell, "SHLVL=1");
-	if (!shell_get_env(shell->envp, "PWD"))
+		name = ft_strdup(arg);
+	nlen = (int)ft_strlen(name);
+	i = -1;
+	while (shell->envp[++i])
 	{
-		if (getcwd(cwd, 1024))
+		if (ft_strncmp(shell->envp[i], name, nlen) == 0
+			&& (shell->envp[i][nlen] == '=' || !shell->envp[i][nlen]))
 		{
-			new_lvl = ft_strjoin("PWD=", cwd);
-			update_env(shell, new_lvl);
-			free(new_lvl);
+			free(shell->envp[i]);
+			shell->envp[i] = ft_strdup(arg);
+			free(name);
+			return ;
 		}
 	}
+	free(name);
+	append_env(shell, arg);
 }
 
-int	builtin_export(t_shell *shell, char **args)
+int	builtin_export(t_shell_data *shell, char **args)
 {
 	int		i;
 	int		ret;
@@ -210,7 +103,8 @@ int	builtin_export(t_shell *shell, char **args)
 		if (!is_valid_id(args[i]))
 		{
 			a[0] = args[i];
-			ft_fprintf(2, "minishell: export: `%s': not a valid identifier\n", a);
+			ft_fprintf(2,
+				"minishell: export: `%s': not a valid identifier\n", a);
 			ret = 1;
 		}
 		else
