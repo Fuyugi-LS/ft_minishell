@@ -44,9 +44,9 @@ $(NAME): $(FPRINTF_LIB) $(LIBFT_LIB) $(OBJ)
 	@echo "Built $(NAME) successfully!"
 
 norm:
-	@echo "Checking Norminette"
+	@echo "Checking norminette"
 	@norminette * 2>&1 | grep "Error!" && \
-		(echo "Norminette ERROR! Compilation aborted." && exit 1) || true
+		(echo "norminette ERROR! Compilation aborted." && exit 1) || true
 
 %.o: %.c
 	@$(CC) $(CFLAGS) $(INC) -c $< -o $@ > /dev/null

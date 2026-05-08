@@ -149,6 +149,8 @@ int	process_heredoc_list(t_redirect *r)
 			{
 				res = write_heredoc(fd, r);
 				close(fd);
+				if (res)
+					unlink(".heredoc_tmp");
 			}
 		}
 		r = r->next;
