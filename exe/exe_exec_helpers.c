@@ -21,9 +21,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-int		setup_redirs(t_shell_data *shell, t_redirect *r);
-char	**expand_cmd_args(t_shell_data *shell, char **args);
-
 void	child_cleanup(t_shell_data *shell)
 {
 	free(shell->last_input);

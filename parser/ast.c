@@ -16,10 +16,6 @@
 #include "ft_fprintf.h"
 #include "libft.h"
 
-static t_ast_node	*parse_primary(t_shell_data *shell, t_lex_token **tokens);
-static t_ast_node	*parse_pipeline(t_shell_data *shell, t_lex_token **tokens);
-static t_ast_node	*parse_logical(t_shell_data *shell, t_lex_token **tokens);
-
 static t_ast_node	*new_node(t_mem_arena **a, t_node_kind type)
 {
 	t_ast_node	*n;

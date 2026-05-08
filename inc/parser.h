@@ -30,5 +30,9 @@ void		add_redir_node(t_shell_data *shell, t_redirect **list,
 				t_redir_kind type, char *file);
 void		expand_wildcard(t_shell_data *shell, char *pat,
 				char ***args, int *wi);
+void		execute_ast(t_shell_data *shell, t_ast_node *node);
+int			setup_redirs(t_shell_data *shell, t_redirect *r);
+void		close_extra_fds(void);
+void		child_cleanup(t_shell_data *shell);
 
 #endif

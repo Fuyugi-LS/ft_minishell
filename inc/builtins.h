@@ -25,5 +25,8 @@ void	init_env(t_shell_data *shell, char **envp);
 void	free_env(t_shell_data *shell);
 int		builtin_unset(t_shell_data *shell, char **args);
 void	builtin_exit(t_shell_data *shell, char **args);
+int		parse_segments(const char *path, const char **segs, int *lens);
+void	build_output(const char **segs, int *lens, int is_abs, char *out);
+void	update_pwd(t_shell_data *shell, char *new_pwd);
 
 #endif

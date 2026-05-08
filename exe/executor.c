@@ -28,17 +28,6 @@
 #include <fcntl.h>
 #include <errno.h>
 
-int		setup_redirs(t_shell_data *shell, t_redirect *r);
-void	execute_ast(t_shell_data *shell, t_ast_node *node);
-void	close_all_pipes(int (*pipes)[2], int count);
-void	run_pipe_child(t_shell_data *shell, t_ast_node *node, int *p, int side);
-void	run_child(t_exec_context *context, int index);
-int		exec_builtin_single(t_shell_data *shell, t_command *cmds, int count);
-void	update_underscore(t_shell_data *shell, char **args);
-int		process_heredoc_list(t_redirect *r);
-void	close_extra_fds(void);
-void	child_cleanup(t_shell_data *shell);
-
 static void	execute_subshell(t_shell_data *shell, t_ast_node *node)
 {
 	pid_t	pid;

@@ -14,6 +14,7 @@
 # define EXPANDER_H
 
 # include "shell.h"
+# include "cmd_types.h"
 
 typedef struct s_word_expand
 {
@@ -23,5 +24,7 @@ typedef struct s_word_expand
 }	t_word_expand;
 
 char	*expand_word(t_shell_data *shell, char *s, int *seen_quotes);
+int		setup_redirs(t_shell_data *shell, t_redirect *r);
+char	**expand_cmd_args(t_shell_data *shell, char **args);
 
 #endif

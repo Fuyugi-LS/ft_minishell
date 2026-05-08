@@ -19,10 +19,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-int		parse_segments(const char *path, const char **segs, int *lens);
-void	build_output(const char **segs, int *lens, int is_abs, char *out);
-void	update_pwd(t_shell_data *shell, char *new_pwd);
-
 static void	prepend_pwd(t_shell_data *shell, const char *target, char *buf)
 {
 	char	*pwd;

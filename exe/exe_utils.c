@@ -21,8 +21,6 @@
 #include <sys/stat.h>
 #include <errno.h>
 
-void	child_cleanup(t_shell_data *shell);
-
 static char	*search_path_dirs(char *cmd, char **dirs)
 {
 	size_t	dlen;

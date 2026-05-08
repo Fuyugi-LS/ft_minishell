@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   minishell.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nsongsit <nsongsit@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vasukmua <vasukmua@student.42bangkok.com>  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/20 18:00:00 by vasukmua          #+#    #+#             */
-/*   Updated: 2026/05/07 14:11:27 by nsongsit         ###   ########.fr       */
+/*   Updated: 2026/05/07 14:11:27 by vasukmua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,11 +27,9 @@ static char	*get_input_line(void)
 	char	*input;
 	int		ilen;
 
-	write(1, "minishell$ ", 11);
 	input = get_next_line(0);
 	if (!input)
 		return (NULL);
-	write(1, "\n", 1);
 	ilen = (int) ft_strlen(input);
 	if (ilen > 0 && input[ilen - 1] == '\n')
 		input[ilen - 1] = '\0';

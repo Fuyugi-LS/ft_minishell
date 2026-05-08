@@ -28,11 +28,6 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 
-void	execute_ast(t_shell_data *shell, t_ast_node *node);
-int		setup_redirs(t_shell_data *shell, t_redirect *r);
-void	close_extra_fds(void);
-void	child_cleanup(t_shell_data *shell);
-
 void	close_all_pipes(int (*pipes)[2], int count)
 {
 	int	i;

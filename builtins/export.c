@@ -17,8 +17,6 @@
 #include <unistd.h>
 #include "exe_ctx_utils.h"
 
-void	print_exported(char **envp);
-
 static int	is_valid_id(char *s)
 {
 	int	i;
