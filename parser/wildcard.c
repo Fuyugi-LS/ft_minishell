@@ -10,8 +10,9 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "shell.h"
-#include "parser.h"
+#include "ms_arena.h"
+#include "minishell.h"
+#include "ms_expand.h"
 #include "libft.h"
 #include <dirent.h>
 

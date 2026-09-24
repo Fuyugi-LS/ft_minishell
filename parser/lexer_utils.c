@@ -10,8 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "cmd_types.h"
-#include "arena.h"
+#include "ms_arena.h"
+#include "ms_lexer.h"
 #include "libft.h"
 
 char	*arena_substr(t_mem_arena **a, char *s, int start, int len)

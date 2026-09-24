@@ -10,12 +10,12 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "shell.h"
-#include "ft_fprintf.h"
+#include "minishell.h"
+#include "ms_env.h"
+#include "ms_builtin.h"
 #include "libft.h"
 #include <stdlib.h>
 #include <unistd.h>
-#include "exe_ctx_utils.h"
 
 static int	is_valid_id(char *s)
 {
@@ -87,7 +87,6 @@ int	builtin_export(t_shell_data *shell, char **args)
 {
 	int		i;
 	int		ret;
-	void	*a[1];
 
 	if (!args[1])
 	{
@@ -100,9 +99,8 @@ int	builtin_export(t_shell_data *shell, char **args)
 	{
 		if (!is_valid_id(args[i]))
 		{
-			a[0] = args[i];
-			ft_fprintf(2,
-				"minishell: export: `%s': not a valid identifier\n", a);
+			print_error("minishell: export: `", args[i],
+				"': not a valid identifier");
 			ret = 1;
 		}
 		else

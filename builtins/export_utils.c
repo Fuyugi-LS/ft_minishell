@@ -10,9 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "shell.h"
-#include "builtins.h"
-#include "exe_ctx_utils.h"
+#include "minishell.h"
+#include "ms_env.h"
 #include "libft.h"
 #include <stdlib.h>
 #include <unistd.h>
@@ -31,6 +30,24 @@ void	free_env(t_shell_data *shell)
 	}
 	free(shell->envp);
 	shell->envp = NULL;
+}
+
+void	filter_exec_env(char **envp)
+{
+	int	i;
+	int	j;
+
+	i = 0;
+	j = 0;
+	while (envp[i])
+	{
+		if (ft_strchr(envp[i], '='))
+			envp[j++] = envp[i];
+		else
+			free(envp[i]);
+		i++;
+	}
+	envp[j] = NULL;
 }
 
 static void	init_env_shlvl(t_shell_data *shell)
@@ -52,12 +69,25 @@ static void	init_env_shlvl(t_shell_data *shell)
 		update_env(shell, "SHLVL=1");
 }
 
+static void	init_env_pwd(t_shell_data *shell)
+{
+	char	cwd[1024];
+	char	*entry;
+
+	if (shell_get_env(shell->envp, "PWD"))
+		return ;
+	if (getcwd(cwd, 1024))
+	{
+		entry = ft_strjoin("PWD=", cwd);
+		update_env(shell, entry);
+		free(entry);
+	}
+}
+
 void	init_env(t_shell_data *shell, char **envp)
 {
 	int		len;
 	int		i;
-	char	cwd[1024];
-	char	*new_lvl;
 
 	len = 0;
 	while (envp[len])
@@ -68,13 +98,7 @@ void	init_env(t_shell_data *shell, char **envp)
 		shell->envp[i] = ft_strdup(envp[i]);
 	shell->envp[len] = NULL;
 	init_env_shlvl(shell);
-	if (!shell_get_env(shell->envp, "PWD"))
-	{
-		if (getcwd(cwd, 1024))
-		{
-			new_lvl = ft_strjoin("PWD=", cwd);
-			update_env(shell, new_lvl);
-			free(new_lvl);
-		}
-	}
+	if (!shell_get_env(shell->envp, "OLDPWD"))
+		update_env(shell, "OLDPWD");
+	init_env_pwd(shell);
 }

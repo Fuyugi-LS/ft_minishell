@@ -1,42 +1,20 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   cmd_types.h                                        :+:      :+:    :+:   */
+/*   ms_parser.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: nsongsit <nsongsit@student.42bangkok.com>  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/20 18:00:00 by nsongsit          #+#    #+#             */
-/*   Updated: 2026/04/20 18:00:00 by nsongsit         ###   ########.fr       */
+/*   Created: 2026/09/24 20:00:00 by nsongsit          #+#    #+#             */
+/*   Updated: 2026/09/24 20:00:00 by nsongsit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef CMD_TYPES_H
-# define CMD_TYPES_H
+#ifndef MS_PARSER_H
+# define MS_PARSER_H
 
-typedef enum e_tok_type
-{
-	TOK_WORD,
-	TOK_PIPE,
-	TOK_REDIR_IN,
-	TOK_REDIR_OUT,
-	TOK_REDIR_APPEND,
-	TOK_REDIR_HEREDOC,
-	TOK_AND,
-	TOK_OR,
-	TOK_LPAREN,
-	TOK_RPAREN,
-	TOK_AMPERSAND,
-	TOK_SEMICOLON,
-	TOK_EOF,
-	TOK_ERROR
-}	t_tok_type;
-
-typedef struct s_lex_token
-{
-	t_tok_type			type;
-	char				*value;
-	struct s_lex_token	*next;
-}	t_lex_token;
+# include "minishell.h"
+# include "ms_lexer.h"
 
 typedef enum e_redir_kind
 {
@@ -50,6 +28,7 @@ typedef struct s_redirect
 {
 	t_redir_kind		type;
 	char				*file;
+	char				*heredoc_path;
 	struct s_redirect	*next;
 }	t_redirect;
 
@@ -78,5 +57,14 @@ typedef struct s_ast_node
 	t_redirect			*redirs;
 	int					count;
 }	t_ast_node;
+
+t_command	*parse_tokens(t_shell_data *shell, t_lex_token **tokens,
+				int *cmd_count);
+t_ast_node	*parse_ast(t_shell_data *shell, t_lex_token **tokens);
+int			parse_redirection(t_shell_data *shell, t_redirect **redirs,
+				t_lex_token **t);
+int			is_redir_tok(t_lex_token *t);
+void		add_redir_node(t_shell_data *shell, t_redirect **list,
+				t_redir_kind type, char *file);
 
 #endif

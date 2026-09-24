@@ -10,8 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "shell.h"
-#include "ft_fprintf.h"
+#include "minishell.h"
+#include "ms_builtin.h"
 #include <unistd.h>
 #include "libft.h"
 
@@ -24,16 +24,12 @@
 int	builtin_env(t_shell_data *shell)
 {
 	int		i;
-	void	*a[1];
 
 	i = -1;
 	while (shell->envp[++i])
 	{
 		if (ft_strchr(shell->envp[i], '='))
-		{
-			a[0] = shell->envp[i];
-			ft_fprintf(1, "%s\n", a);
-		}
+			ft_putendl_fd(shell->envp[i], 1);
 	}
 	return (0);
 }

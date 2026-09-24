@@ -10,12 +10,11 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "cmd_types.h"
-#include "exe_ctx_utils.h"
-#include "ft_fprintf.h"
+#include "minishell.h"
+#include "ms_env.h"
+#include "ms_parser.h"
+#include "ms_exec.h"
 #include "libft.h"
-#include "shell.h"
-#include "builtins.h"
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -82,26 +81,24 @@ static char	*find_path(char *cmd, char **envp)
 
 static void	handle_cmd_err(t_shell_data *shell, char *name, int mode)
 {
-	void	*err[1];
 	int		code;
 
-	err[0] = name;
 	code = 127;
 	if (mode == -1)
-		ft_fprintf(2, "minishell: %s: Is a directory\n", err);
+		print_error("minishell: ", name, ": Is a directory");
 	else if (mode == 0 && (name[0] == '/' || name[0] == '.'))
-		ft_fprintf(2, "minishell: %s: No such file or directory\n", err);
+		print_error("minishell: ", name, ": No such file or directory");
 	else if (mode == 0)
-		ft_fprintf(2, "minishell: %s: command not found\n", err);
+		print_error("minishell: ", name, ": command not found");
 	else if (errno == EACCES)
 	{
-		ft_fprintf(2, "minishell: %s: Permission denied\n", err);
+		print_error("minishell: ", name, ": Permission denied");
 		code = 126;
 	}
 	else if (errno == ENOENT)
-		ft_fprintf(2, "minishell: %s: No such file or directory\n", err);
+		print_error("minishell: ", name, ": No such file or directory");
 	else
-		ft_fprintf(2, "minishell: %s: command not found\n", err);
+		print_error("minishell: ", name, ": command not found");
 	if (mode == -1)
 		code = 126;
 	child_cleanup(shell);
@@ -132,6 +129,7 @@ void	exe_launch(t_command *cmd, t_shell_data *shell)
 		update_env(shell, env_arg);
 		free(env_arg);
 	}
+	filter_exec_env(shell->envp);
 	execve(path, cmd->args, shell->envp);
 	handle_cmd_err(shell, cmd->args[0], 1);
 }

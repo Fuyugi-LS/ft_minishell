@@ -1,21 +1,26 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   exe_launch_utils.h                                 :+:      :+:    :+:   */
+/*   signal_modes.c                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nsongsit <nsongsit@student.42bangkok.com>  +#+  +:+       +#+        */
+/*   By: vasukmua <vasukmua@student.42bangkok.com>  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/20 18:00:00 by nsongsit          #+#    #+#             */
-/*   Updated: 2026/04/20 18:00:00 by nsongsit         ###   ########.fr       */
+/*   Created: 2026/09/24 18:00:00 by vasukmua          #+#    #+#             */
+/*   Updated: 2026/09/24 18:00:00 by vasukmua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef EXE_LAUNCH_UTILS_H
-# define EXE_LAUNCH_UTILS_H
+#include <signal.h>
+#include "ms_signal.h"
 
-# include "cmd_types.h"
-# include "shell.h"
+void	signals_ignore(void)
+{
+	signal(SIGINT, SIG_IGN);
+	signal(SIGQUIT, SIG_IGN);
+}
 
-void	exe_launch(t_command *cmd, t_shell_data *shell);
-
-#endif
+void	signals_child_reset(void)
+{
+	signal(SIGINT, SIG_DFL);
+	signal(SIGQUIT, SIG_DFL);
+}

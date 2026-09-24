@@ -1,21 +1,29 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   builtin_dispatch.h                                 :+:      :+:    :+:   */
+/*   minishell.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vasukmua <vasukmua@student.42bangkok.com>  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/20 18:00:00 by vasukmua          #+#    #+#             */
-/*   Updated: 2026/04/20 18:00:00 by vasukmua         ###   ########.fr       */
+/*   Created: 2026/09/24 20:00:00 by vasukmua          #+#    #+#             */
+/*   Updated: 2026/09/24 20:00:00 by vasukmua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef BUILTIN_DISPATCH_H
-# define BUILTIN_DISPATCH_H
+#ifndef MINISHELL_H
+# define MINISHELL_H
 
-# include "shell.h"
+# include "ms_arena.h"
 
-int		is_builtin(char *name);
-int		run_builtin(t_shell_data *shell, char **args);
+typedef struct s_shell_data
+{
+	char		**envp;
+	t_mem_arena	*arena;
+	char		*last_input;
+	int			last_exit;
+	int			error_printed;
+}	t_shell_data;
+
+void	print_error(char *before, char *value, char *after);
 
 #endif

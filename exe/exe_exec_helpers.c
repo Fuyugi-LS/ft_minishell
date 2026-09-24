@@ -10,14 +10,14 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "cmd_types.h"
-#include "shell.h"
-#include "builtin_dispatch.h"
-#include "builtins.h"
-#include "expander.h"
+#include "ms_arena.h"
+#include "minishell.h"
+#include "ms_env.h"
+#include "ms_parser.h"
+#include "ms_expand.h"
+#include "ms_exec.h"
+#include "ms_builtin.h"
 #include "libft.h"
-#include "get_next_line.h"
-#include "arena.h"
 #include <unistd.h>
 #include <stdlib.h>
 
@@ -26,7 +26,6 @@ void	child_cleanup(t_shell_data *shell)
 	free(shell->last_input);
 	free_env(shell);
 	arena_destroy(shell->arena);
-	gnl_cleanup();
 	close(STDIN_FILENO);
 	close(STDOUT_FILENO);
 	close(STDERR_FILENO);

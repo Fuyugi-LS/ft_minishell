@@ -3,7 +3,7 @@ NAME        = minishell
 CC          = cc
 CFLAGS      = -Wall -Wextra -Werror -g3
 
-SRCS        = minishell.c signals.c \
+SRCS        = minishell.c signals.c signal_modes.c print_error.c \
               builtins/echo.c builtins/pwd.c builtins/exit.c builtins/cd.c \
               builtins/cd_utils.c \
               builtins/env.c builtins/export.c builtins/export_print.c \
@@ -22,38 +22,32 @@ SRCS        = minishell.c signals.c \
               exe/exe_utils.c \
               exe/exe_ctx.c \
               exe/exe_redir.c \
-              exe/exe_child.c \
-              gnl/get_next_line.c \
-              gnl/get_next_line_utils.c
+              exe/heredoc.c \
+              exe/heredoc_expand.c \
+              exe/heredoc_files.c \
+              exe/heredoc_tree.c \
+              exe/exe_wait.c \
+              exe/exe_child.c
 OBJ         = $(SRCS:.c=.o)
 
-FPRINTF_DIR = dep/ft_fprintf
-FPRINTF_LIB = $(FPRINTF_DIR)/libftfprintf.a
-
-LIBFT_DIR   = dep/libft
+LIBFT_DIR   = libft
 LIBFT_LIB   = $(LIBFT_DIR)/libft.a
 
-INC         = -Iinc -Idep/ft_fprintf -Idep/libft -Ignl
-LIBS        = -L$(FPRINTF_DIR) -lftfprintf -L$(LIBFT_DIR) -lft -lreadline
+INC         = -Iinc -Ilibft
+LIBS        = -L$(LIBFT_DIR) -lft -lreadline
 
-all: norm $(NAME)
+all: $(NAME)
 
-$(NAME): $(FPRINTF_LIB) $(LIBFT_LIB) $(OBJ)
+$(NAME): $(LIBFT_LIB) $(OBJ)
 	@echo "Linking $(NAME)..."
 	@$(CC) $(CFLAGS) $(OBJ) $(LIBS) -o $(NAME)
 	@echo "Built $(NAME) successfully!"
 
 norm:
-	@echo "Checking norminette"
-	@norminette * 2>&1 | grep "Error!" && \
-		echo "norminette ERROR!" || echo "norminette: OK!"
+	norminette $(SRCS) inc libft
 
 %.o: %.c
 	@$(CC) $(CFLAGS) $(INC) -c $< -o $@ > /dev/null
-
-$(FPRINTF_LIB):
-	@echo "Building ft_fprintf"
-	@$(MAKE) -s -C $(FPRINTF_DIR) > /dev/null 2>&1
 
 $(LIBFT_LIB):
 	@echo "Building libft"
@@ -62,7 +56,6 @@ $(LIBFT_LIB):
 clean:
 	@echo "Cleaning object and dependency"
 	@rm -f $(OBJ)
-	@$(MAKE) -s -C $(FPRINTF_DIR) fclean > /dev/null 2>&1
 	@$(MAKE) -s -C $(LIBFT_DIR) fclean > /dev/null 2>&1
 
 fclean: clean

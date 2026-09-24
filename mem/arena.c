@@ -10,8 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "arena_struct.h"
-#include "ft_fprintf.h"
+#include "ms_arena.h"
+#include "libft.h"
 #include <stdlib.h>
 
 /**
@@ -27,13 +27,13 @@ t_mem_arena	*arena_init(size_t size)
 	arena = malloc(sizeof (t_mem_arena));
 	if (!arena)
 	{
-		ft_fprintf(2, "Error: malloc failed\n", NULL);
+		ft_putendl_fd("Error: malloc failed", 2);
 		return (NULL);
 	}
 	arena->block = malloc(size);
 	if (!arena->block)
 	{
-		ft_fprintf(2, "Error: malloc failed\n", NULL);
+		ft_putendl_fd("Error: malloc failed", 2);
 		free(arena);
 		arena = NULL;
 		return (NULL);

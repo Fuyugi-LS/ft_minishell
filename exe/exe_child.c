@@ -10,19 +10,14 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "cmd_types.h"
-#include "shell.h"
-#include "exe_struct.h"
-#include "exe_ctx_utils.h"
-#include "exe_launch_utils.h"
-#include "builtin_dispatch.h"
-#include "builtins.h"
-#include "ft_fprintf.h"
+#include "ms_arena.h"
+#include "minishell.h"
+#include "ms_signal.h"
+#include "ms_parser.h"
+#include "ms_expand.h"
+#include "ms_exec.h"
+#include "ms_builtin.h"
 #include "libft.h"
-#include "expander.h"
-#include "parser.h"
-#include "arena.h"
-#include "signal_minishell.h"
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/wait.h>
@@ -127,7 +122,7 @@ void	run_child(t_exec_context *context, int index)
 	pid = fork();
 	if (pid < 0)
 	{
-		ft_fprintf(2, "minishell: fork failed\n", NULL);
+		ft_putendl_fd("minishell: fork failed", 2);
 		return ;
 	}
 	if (pid == 0)

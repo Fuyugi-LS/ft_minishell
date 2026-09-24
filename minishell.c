@@ -13,27 +13,20 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <unistd.h>
-#include "builtins.h"
-#include "shell.h"
-#include "get_next_line.h"
-#include "signal_minishell.h"
-#include "ft_fprintf.h"
-#include "parser.h"
-#include "exe.h"
+#include "minishell.h"
+#include "ms_env.h"
+#include "ms_signal.h"
+#include "ms_lexer.h"
+#include "ms_parser.h"
+#include "ms_exec.h"
+#include "ms_heredoc.h"
 #include "libft.h"
 
-static char	*get_input_line(void)
+static char	*read_input(void)
 {
-	char	*input;
-	int		ilen;
-
-	input = get_next_line(0);
-	if (!input)
-		return (NULL);
-	ilen = (int) ft_strlen(input);
-	if (ilen > 0 && input[ilen - 1] == '\n')
-		input[ilen - 1] = '\0';
-	return (input);
+	if (isatty(STDIN_FILENO))
+		return (readline("minishell$ "));
+	return (readline(NULL));
 }
 
 static void	handle_error_message(t_lex_token *cur_tok, t_ast_node *ast,
@@ -75,10 +68,11 @@ static void	run_iteration(t_shell_data *shell, char *input)
 		handle_error_message(cur_tok, ast, shell);
 	if (ast && !shell->error_printed && !cur_tok)
 	{
-		if (traverse_ast_heredocs(ast))
+		if (traverse_ast_heredocs(shell, ast))
 			shell->last_exit = 130;
 		else
 			execute_ast(shell, ast);
+		cleanup_ast_heredocs(ast);
 	}
 	else if (ast)
 		shell->last_exit = 2;
@@ -92,25 +86,19 @@ void	run_loop(t_shell_data *shell)
 
 	while (1)
 	{
-		if (isatty(0))
+		g_signal = 0;
+		input = read_input();
+		if (g_signal == SIGINT)
+			shell->last_exit = 130;
+		g_signal = 0;
+		if (!input)
 		{
-			rl_on_new_line();
-			rl_replace_line("", 0);
-			input = readline("minishell$ ");
-			if (!input)
-			{
+			if (isatty(STDIN_FILENO))
 				write(1, "exit\n", 5);
-				break ;
-			}
-			if (*input)
-				add_history(input);
+			break ;
 		}
-		else
-		{
-			input = get_input_line();
-			if (!input)
-				break ;
-		}
+		if (isatty(STDIN_FILENO) && *input)
+			add_history(input);
 		run_iteration(shell, input);
 	}
 }
@@ -128,10 +116,10 @@ int	main(int argc, char **argv, char **envp)
 	if (!shell.arena)
 		return (1);
 	init_env(&shell, envp);
+	rl_catch_signals = 0;
 	init_signals();
 	run_loop(&shell);
 	free_env(&shell);
-	gnl_cleanup();
 	arena_destroy(shell.arena);
 	return (shell.last_exit);
 }

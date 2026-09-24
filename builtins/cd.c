@@ -10,10 +10,9 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "shell.h"
-#include "builtins.h"
-#include "exe_ctx_utils.h"
-#include "ft_fprintf.h"
+#include "minishell.h"
+#include "ms_env.h"
+#include "ms_builtin.h"
 #include "libft.h"
 #include <limits.h>
 #include <unistd.h>
@@ -57,9 +56,9 @@ static void	compute_logical(t_shell_data *shell, const char *target,
 
 static int	cd_getcwd_error(void)
 {
-	ft_fprintf(2, "minishell: cd: error retrieving current"
-		" directory: getcwd: cannot access parent"
-		" directories: No such file or directory\n", NULL);
+	ft_putstr_fd("minishell: cd: error retrieving current directory: ", 2);
+	ft_putendl_fd("getcwd: cannot access parent directories: "
+		"No such file or directory", 2);
 	return (1);
 }
 
@@ -72,7 +71,7 @@ static char	*resolve_target(t_shell_data *shell, char **args, int *pp)
 		*pp = 0;
 		t = shell_get_env(shell->envp, "HOME");
 		if (!t)
-			ft_fprintf(2, "minishell: cd: HOME not set\n", NULL);
+			ft_putendl_fd("minishell: cd: HOME not set", 2);
 		return (t);
 	}
 	if (ft_strncmp(args[1], "-", 2) == 0)
@@ -80,13 +79,13 @@ static char	*resolve_target(t_shell_data *shell, char **args, int *pp)
 		*pp = 1;
 		t = shell_get_env(shell->envp, "OLDPWD");
 		if (!t)
-			ft_fprintf(2, "minishell: cd: OLDPWD not set\n", NULL);
+			ft_putendl_fd("minishell: cd: OLDPWD not set", 2);
 		return (t);
 	}
 	*pp = 0;
 	if (args[2])
 	{
-		ft_fprintf(2, "minishell: cd: too many arguments\n", NULL);
+		ft_putendl_fd("minishell: cd: too many arguments", 2);
 		return (NULL);
 	}
 	return (args[1]);
@@ -97,7 +96,6 @@ int	builtin_cd(t_shell_data *shell, char **args)
 	char	buf[PATH_MAX];
 	char	logical[PATH_MAX];
 	char	*target;
-	void	*a[1];
 	int		pp;
 
 	target = resolve_target(shell, args, &pp);
@@ -106,17 +104,14 @@ int	builtin_cd(t_shell_data *shell, char **args)
 	compute_logical(shell, target, buf, logical);
 	if (chdir(logical) != 0 && chdir(target) != 0)
 	{
-		a[0] = target;
-		ft_fprintf(2, "minishell: cd: %s: No such file or directory\n", a);
+		print_error("minishell: cd: ", target,
+			": No such file or directory");
 		return (1);
 	}
 	if (!getcwd(buf, PATH_MAX))
 		return (cd_getcwd_error());
 	update_pwd(shell, logical);
 	if (pp)
-	{
-		a[0] = logical;
-		ft_fprintf(1, "%s\n", a);
-	}
+		ft_putendl_fd(logical, 1);
 	return (0);
 }

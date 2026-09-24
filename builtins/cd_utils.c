@@ -10,9 +10,9 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "shell.h"
-#include "builtins.h"
-#include "exe_ctx_utils.h"
+#include "minishell.h"
+#include "ms_env.h"
+#include "ms_builtin.h"
 #include "libft.h"
 #include <limits.h>
 #include <stdlib.h>

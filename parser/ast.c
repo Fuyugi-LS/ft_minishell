@@ -10,10 +10,10 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "shell.h"
-#include "parser.h"
-#include "arena.h"
-#include "ft_fprintf.h"
+#include "ms_arena.h"
+#include "minishell.h"
+#include "ms_lexer.h"
+#include "ms_parser.h"
 #include "libft.h"
 
 static t_ast_node	*new_node(t_mem_arena **a, t_node_kind type)

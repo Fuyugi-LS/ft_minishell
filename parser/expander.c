@@ -10,11 +10,11 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "shell.h"
-#include "expander.h"
-#include "exe_ctx_utils.h"
+#include "ms_arena.h"
+#include "minishell.h"
+#include "ms_env.h"
+#include "ms_expand.h"
 #include "libft.h"
-#include "arena.h"
 
 static void	append_str(t_mem_arena **a, char **res, char *add, int tag)
 {

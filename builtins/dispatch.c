@@ -10,7 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "builtins.h"
+#include "minishell.h"
+#include "ms_builtin.h"
 #include "libft.h"
 
 /**

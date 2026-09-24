@@ -10,9 +10,10 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "shell.h"
-#include "exe_struct.h"
-#include "ft_fprintf.h"
+#include "minishell.h"
+#include "ms_env.h"
+#include "ms_parser.h"
+#include "ms_exec.h"
 #include "libft.h"
 #include <stdlib.h>
 #include <unistd.h>
@@ -48,7 +49,7 @@ static int	open_pipes(t_exec_context *context)
 	context->pipes = malloc(sizeof (int) * 2 * (context->count - 1));
 	if (!context->pipes)
 	{
-		ft_fprintf(2, "minishell: malloc failed\n", NULL);
+		ft_putendl_fd("minishell: malloc failed", 2);
 		free(context->pids);
 		context->pids = NULL;
 		return (1);
@@ -58,7 +59,7 @@ static int	open_pipes(t_exec_context *context)
 	{
 		if (pipe(context->pipes[i]) == -1)
 		{
-			ft_fprintf(2, "minishell: pipe failed\n", NULL);
+			ft_putendl_fd("minishell: pipe failed", 2);
 			free(context->pids);
 			context->pids = NULL;
 			free(context->pipes);
@@ -78,7 +79,7 @@ int	exe_context_init(t_exec_context *context, t_command *cmds,
 	context->pids = malloc(sizeof (pid_t) * context->count);
 	if (!context->pids)
 	{
-		ft_fprintf(2, "minishell: malloc failed\n", NULL);
+		ft_putendl_fd("minishell: malloc failed", 2);
 		return (1);
 	}
 	context->pipes = NULL;

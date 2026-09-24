@@ -1,26 +1,22 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   arena_struct.h                                     :+:      :+:    :+:   */
+/*   print_error.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nsongsit <nsongsit@student.42bangkok.com>  +#+  +:+       +#+        */
+/*   By: vasukmua <vasukmua@student.42bangkok.com>  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/20 18:00:00 by nsongsit          #+#    #+#             */
-/*   Updated: 2026/04/20 18:00:00 by nsongsit         ###   ########.fr       */
+/*   Created: 2026/09/24 18:20:00 by vasukmua          #+#    #+#             */
+/*   Updated: 2026/09/24 18:20:00 by vasukmua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef ARENA_STRUCT_H
-# define ARENA_STRUCT_H
+#include "minishell.h"
+#include "libft.h"
 
-# include <stddef.h>
-
-typedef struct s_mem_arena
+void	print_error(char *before, char *value, char *after)
 {
-	void				*block;
-	size_t				size;
-	size_t				offset;
-	struct s_mem_arena	*next;
-}	t_mem_arena;
-
-#endif
+	ft_putstr_fd(before, 2);
+	if (value)
+		ft_putstr_fd(value, 2);
+	ft_putendl_fd(after, 2);
+}

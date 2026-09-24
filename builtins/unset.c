@@ -10,7 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "shell.h"
+#include "minishell.h"
+#include "ms_builtin.h"
 #include "libft.h"
 
 static int	key_matches(char *entry, char *key)

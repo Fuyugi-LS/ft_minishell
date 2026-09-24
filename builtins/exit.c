@@ -10,11 +10,11 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "shell.h"
-#include "ft_fprintf.h"
+#include "minishell.h"
+#include "ms_arena.h"
+#include "ms_env.h"
+#include "ms_builtin.h"
 #include "libft.h"
-#include "get_next_line.h"
-#include "builtins.h"
 #include <stdlib.h>
 
 static int	atoll_check_overflow(unsigned long long n, int sign, char c)
@@ -73,7 +73,6 @@ static int	atoll_check(const char *str, long long *res)
 static void	cleanup_and_exit(t_shell_data *shell, int code)
 {
 	free_env(shell);
-	gnl_cleanup();
 	arena_destroy(shell->arena);
 	exit(code & 0xFF);
 }

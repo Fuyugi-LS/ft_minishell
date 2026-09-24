@@ -10,9 +10,10 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "shell.h"
-#include "exe_ctx_utils.h"
-#include "ft_fprintf.h"
+#include "minishell.h"
+#include "ms_env.h"
+#include "ms_builtin.h"
+#include "libft.h"
 #include <unistd.h>
 #include <limits.h>
 
@@ -26,21 +27,18 @@ int	builtin_pwd(t_shell_data *shell)
 {
 	char	buf[PATH_MAX];
 	char	*env_pwd;
-	void	*a[1];
 
 	env_pwd = shell_get_env(shell->envp, "PWD");
 	if (env_pwd)
 	{
-		a[0] = env_pwd;
-		ft_fprintf(1, "%s\n", a);
+		ft_putendl_fd(env_pwd, 1);
 		return (0);
 	}
 	if (!getcwd(buf, PATH_MAX))
 	{
-		ft_fprintf(2, "minishell: pwd: getcwd failed\n", NULL);
+		ft_putendl_fd("minishell: pwd: getcwd failed", 2);
 		return (1);
 	}
-	a[0] = buf;
-	ft_fprintf(1, "%s\n", a);
+	ft_putendl_fd(buf, 1);
 	return (0);
 }

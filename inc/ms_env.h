@@ -1,27 +1,24 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   shell.h                                            :+:      :+:    :+:   */
+/*   ms_env.h                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vasukmua <vasukmua@student.42bangkok.com>  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/20 18:00:00 by vasukmua          #+#    #+#             */
-/*   Updated: 2026/04/20 18:00:00 by vasukmua         ###   ########.fr       */
+/*   Created: 2026/09/24 20:00:00 by vasukmua          #+#    #+#             */
+/*   Updated: 2026/09/24 20:00:00 by vasukmua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef SHELL_H
-# define SHELL_H
+#ifndef MS_ENV_H
+# define MS_ENV_H
 
-# include "arena.h"
+# include "minishell.h"
 
-typedef struct s_shell_data
-{
-	char		**envp;
-	t_mem_arena	*arena;
-	char		*last_input;
-	int			last_exit;
-	int			error_printed;
-}	t_shell_data;
+char	*shell_get_env(char **envp, char *key);
+void	update_env(t_shell_data *shell, char *arg);
+void	init_env(t_shell_data *shell, char **envp);
+void	free_env(t_shell_data *shell);
+void	filter_exec_env(char **envp);
 
 #endif

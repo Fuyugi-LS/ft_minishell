@@ -10,27 +10,25 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "cmd_types.h"
-#include "parser.h"
-#include "parser_utils.h"
-#include "expander.h"
-#include "arena.h"
+#include "ms_arena.h"
+#include "minishell.h"
+#include "ms_lexer.h"
+#include "ms_parser.h"
 #include "libft.h"
-#include "ft_fprintf.h"
 
 int	parse_redirection(t_shell_data *shell, t_redirect **redirs, t_lex_token **t)
 {
-	void		*a[1];
+	char		*value;
 	t_lex_token	*cur;
 
 	cur = *t;
 	if (!cur->next || cur->next->type != TOK_WORD)
 	{
-		a[0] = "newline";
+		value = "newline";
 		if (cur->next)
-			a[0] = cur->next->value;
-		ft_fprintf(2,
-			"minishell: syntax error near unexpected token `%s'\n", a);
+			value = cur->next->value;
+		print_error("minishell: syntax error near unexpected token `",
+			value, "'");
 		shell->last_exit = 2;
 		shell->error_printed = 1;
 		return (1);

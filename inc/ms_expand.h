@@ -1,29 +1,32 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   exe_struct.h                                       :+:      :+:    :+:   */
+/*   ms_expand.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: nsongsit <nsongsit@student.42bangkok.com>  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/20 18:00:00 by nsongsit          #+#    #+#             */
-/*   Updated: 2026/04/20 18:00:00 by nsongsit         ###   ########.fr       */
+/*   Created: 2026/09/24 20:00:00 by nsongsit          #+#    #+#             */
+/*   Updated: 2026/09/24 20:00:00 by nsongsit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef EXE_STRUCT_H
-# define EXE_STRUCT_H
+#ifndef MS_EXPAND_H
+# define MS_EXPAND_H
 
-# include "cmd_types.h"
-# include "shell.h"
-# include <sys/types.h>
+# include "minishell.h"
 
-typedef struct s_exec_context
+typedef struct s_word_expand
 {
-	t_command		*cmds;
-	int				count;
-	t_shell_data	*shell;
-	pid_t			*pids;
-	int				(*pipes)[2];
-}	t_exec_context;
+	char	**res;
+	char	q;
+	int		*seen_q;
+}	t_word_expand;
+
+char	*expand_word(t_shell_data *shell, char *s, int *seen_quotes);
+char	**expand_cmd_args(t_shell_data *shell, char **args);
+int		has_wildcard(char *s);
+char	*finalize_word(char *s);
+void	expand_wildcard(t_shell_data *shell, char *pat,
+			char ***args, int *wi);
 
 #endif

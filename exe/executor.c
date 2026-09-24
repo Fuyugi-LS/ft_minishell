@@ -10,18 +10,11 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "cmd_types.h"
-#include "shell.h"
-#include "exe_struct.h"
-#include "exe_ctx_utils.h"
-#include "exe_launch_utils.h"
-#include "builtin_dispatch.h"
-#include "builtins.h"
-#include "ft_fprintf.h"
+#include "minishell.h"
+#include "ms_signal.h"
+#include "ms_parser.h"
+#include "ms_exec.h"
 #include "libft.h"
-#include "expander.h"
-#include "parser.h"
-#include "signal_minishell.h"
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/wait.h>
@@ -33,9 +26,11 @@ static void	execute_subshell(t_shell_data *shell, t_ast_node *node)
 	pid_t	pid;
 	int		status;
 
+	signals_ignore();
 	pid = fork();
 	if (pid == 0)
 	{
+		signals_child_reset();
 		close_extra_fds();
 		if (setup_redirs(shell, node->redirs))
 		{
@@ -47,10 +42,8 @@ static void	execute_subshell(t_shell_data *shell, t_ast_node *node)
 		exit(shell->last_exit);
 	}
 	waitpid(pid, &status, 0);
-	if (WIFEXITED(status))
-		shell->last_exit = WEXITSTATUS(status);
-	else if (WIFSIGNALED(status))
-		shell->last_exit = 128 + WTERMSIG(status);
+	init_signals();
+	apply_wait_status(shell, status);
 }
 
 static void	execute_pipe_node(t_shell_data *shell, t_ast_node *node)
@@ -62,6 +55,7 @@ static void	execute_pipe_node(t_shell_data *shell, t_ast_node *node)
 
 	if (pipe(p) < 0)
 		return ;
+	signals_ignore();
 	pid = fork();
 	if (pid == 0)
 		run_pipe_child(shell, node, p, 0);
@@ -72,10 +66,8 @@ static void	execute_pipe_node(t_shell_data *shell, t_ast_node *node)
 	close(p[1]);
 	waitpid(pid, &status, 0);
 	waitpid(pid2, &status, 0);
-	if (WIFEXITED(status))
-		shell->last_exit = WEXITSTATUS(status);
-	else if (WIFSIGNALED(status))
-		shell->last_exit = 128 + WTERMSIG(status);
+	init_signals();
+	apply_wait_status(shell, status);
 }
 
 void	execute_commands(t_shell_data *shell, t_command *cmds, int count)
@@ -88,6 +80,7 @@ void	execute_commands(t_shell_data *shell, t_command *cmds, int count)
 		return ;
 	if (exe_context_init(&context, cmds, count, shell))
 		return ;
+	signals_ignore();
 	i = -1;
 	while (++i < count)
 		run_child(&context, i);
@@ -95,10 +88,8 @@ void	execute_commands(t_shell_data *shell, t_command *cmds, int count)
 	i = -1;
 	while (++i < count)
 		waitpid(context.pids[i], &status, 0);
-	if (WIFEXITED(status))
-		shell->last_exit = WEXITSTATUS(status);
-	else if (WIFSIGNALED(status))
-		shell->last_exit = 128 + WTERMSIG(status);
+	init_signals();
+	apply_wait_status(shell, status);
 	update_underscore(shell, cmds[count - 1].args);
 	exe_context_free(&context);
 }
@@ -122,31 +113,4 @@ void	execute_ast(t_shell_data *shell, t_ast_node *node)
 		execute_subshell(shell, node);
 	else if (node->type == NODE_PIPE)
 		execute_pipe_node(shell, node);
-}
-
-int	traverse_ast_heredocs(t_ast_node *node)
-{
-	int	i;
-	int	res;
-
-	if (!node)
-		return (0);
-	if (node->type == NODE_COMMAND)
-	{
-		i = -1;
-		while (++i < node->count)
-		{
-			res = process_heredoc_list(node->cmds[i].redirs);
-			if (res)
-				return (res);
-		}
-		return (0);
-	}
-	res = process_heredoc_list(node->redirs);
-	if (res)
-		return (res);
-	res = traverse_ast_heredocs(node->left);
-	if (res)
-		return (res);
-	return (traverse_ast_heredocs(node->right));
 }

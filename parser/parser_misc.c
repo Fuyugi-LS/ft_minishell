@@ -10,10 +10,11 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "shell.h"
-#include "cmd_types.h"
-#include "parser.h"
-#include "arena.h"
+#include "ms_arena.h"
+#include "minishell.h"
+#include "ms_lexer.h"
+#include "ms_parser.h"
+#include "ms_expand.h"
 #include "libft.h"
 
 char	*finalize_word(char *s)
@@ -63,6 +64,7 @@ void	add_redir_node(t_shell_data *shell, t_redirect **list,
 		return ;
 	new->type = type;
 	new->file = file;
+	new->heredoc_path = NULL;
 	new->next = NULL;
 	if (!*list)
 		*list = new;
